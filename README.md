@@ -50,6 +50,7 @@ It's entirely possible that other interfaces (like directmedia/directshow) eat o
 
 As an example of a generated wrapper function, here's myIDirect3DDevice3::DrawPrimitiveVB from the current version:
 
+```c++
 HRESULT __stdcall myIDirect3DDevice3::DrawPrimitiveVB(D3DPRIMITIVETYPE a, LPDIRECT3DVERTEXBUFFER b, DWORD c, DWORD d, DWORD e)
 {
   logf("myIDirect3DDevice3::DrawPrimitiveVB(D3DPRIMITIVETYPE, LPDIRECT3DVERTEXBUFFER[%08x], DWORD[%d], DWORD[%d], DWORD[%d]);", b, c, d, e);
@@ -57,6 +58,7 @@ HRESULT __stdcall myIDirect3DDevice3::DrawPrimitiveVB(D3DPRIMITIVETYPE a, LPDIRE
   logf(" -> return [%d]\n", x);
   return x;
 }
+```
 
 As you note, not everything is logged (as of yet) - it's possible to add code to produce better logs if some specific thing (like, in this case, the primitve type) is of interest. There is also no logging of modified data or complex structures as of yet. Then again, more logging, slower execution..
 
