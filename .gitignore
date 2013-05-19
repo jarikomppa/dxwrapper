@@ -11,3 +11,10 @@
 *.lai
 *.la
 *.a
+
+Release/
+Debug/
+ipch/
+*.filters
+*.opensdf
+*.sdf
