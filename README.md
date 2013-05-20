@@ -54,14 +54,29 @@ As an example of a generated wrapper function, here's myIDirect3DDevice3::DrawPr
 HRESULT __stdcall myIDirect3DDevice3::DrawPrimitiveVB(D3DPRIMITIVETYPE a, LPDIRECT3DVERTEXBUFFER b, DWORD c, DWORD d, DWORD e)
 {
   logf("myIDirect3DDevice3::DrawPrimitiveVB(D3DPRIMITIVETYPE, LPDIRECT3DVERTEXBUFFER[%08x], DWORD[%d], DWORD[%d], DWORD[%d]);", b, c, d, e);
+  pushtab();
   HRESULT x = mOriginal->DrawPrimitiveVB(a, (b)?((myIDirect3DVertexBuffer *)b)->mOriginal:0, c, d, e);
-  logf(" -> return [%d]\n", x);
+  logfc(" -> return [%d]\n", x);
+  poptab();
   return x;
 }
 ```
 
 As you note, not everything is logged (as of yet) - it's possible to add code to produce better logs if some specific thing (like, in this case, the primitve type) is of interest. There is also no logging of modified data or complex structures as of yet. Then again, more logging, slower execution..
 
+Sample clippet of the log created..
+```c++
+[     +15ms] myIDirect3DDevice3::SetTexture(DWORD[0], LPDIRECT3DTEXTURE2[03418488]); -> return [0]
+[     +16ms] myIDirect3DDevice3::DrawPrimitive(D3DPRIMITIVETYPE, DWORD[452], LPVOID[059c0020], DWORD[4], DWORD[24]); -> return [0]
+[      +0ms] myIDirectDraw4::CreateSurface(LPDDSURFACEDESC2[0018f7d8], LPDIRECTDRAWSURFACE4 FAR *[0018f7ac], IUnknown FAR *); -> return [0]
+[     +15ms] 	myIDirectDrawSurface4 ctor
+[      +0ms] 	Wrapped surface.
+[     +16ms] myIDirectDrawSurface4::Lock(LPRECT[00000000], LPDDSURFACEDESC2[0018f70c], DWORD[1], HANDLE); -> return [0]
+[      +0ms] myIDirectDrawSurface4::Unlock(LPRECT[00000000]); -> return [0]
+[     +16ms] myIDirectDraw4::CreateSurface(LPDDSURFACEDESC2[0018f7d8], LPDIRECTDRAWSURFACE4 FAR *[0018f7b0], IUnknown FAR *); -> return [0]
+[     +15ms] 	myIDirectDrawSurface4 ctor
+[      +0ms] 	Wrapped surface.
+```
 If you play with this code, toss me a note, I'm always interested in hearing about it, but I'm most likely too busy to actually help you (much) =)
 
 Cheers,
