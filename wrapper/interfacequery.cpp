@@ -10,12 +10,12 @@ void genericQueryInterface(REFIID a, void **ptr)
 	if(a==IID_##x) \
 		{ \
 			*ptr = (void*)new my##x(*(x **)ptr); \
-			logf("\tWrapped: " #x "\n");\
+			logf("Wrapped: " #x "\n");\
 			wrapstore(orig, *ptr);\
 			return;\
 		} 
 
-	logf("\tInterface Query: {%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}\n",
+	logf("Interface Query: {%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}\n",
 		a.Data1, a.Data2, a.Data3,
 		a.Data4[0],a.Data4[1],a.Data4[2],a.Data4[3],
 		a.Data4[4],a.Data4[5],a.Data4[6],a.Data4[7]);

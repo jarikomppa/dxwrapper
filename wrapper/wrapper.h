@@ -43,6 +43,9 @@
 #include "myIDirectDrawSurface7.h"
 
 void logf(char * format, ...);
+void logfc(char * format, ...);
 void genericQueryInterface(REFIID riid, LPVOID * ppvObj);
 void wrapstore(void * aOriginal, void * aWrapper);
 void *wrapfetch(void * aOriginal);
+void pushtab();
+void poptab();

@@ -1,10 +1,11 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 #include <vector>
 #include <string>
 
-#define VERSION "ddwrappergen 0.130518 (c)2013 Jari Komppa http://iki.fi/sol/"
+#define VERSION "ddwrappergen 0.130520 (c)2013 Jari Komppa http://iki.fi/sol/"
 
 using namespace std;
 
@@ -339,6 +340,36 @@ void banner(FILE * f)
 "// distribution.\n\n");
 }
 
+void printTemplate(FILE * f, char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	char *s[10];
+	int i = 0;
+	do
+	{
+		s[i] = va_arg(ap, char*);
+		i++;
+	}
+	while (s[i-1]);
+
+	while (*fmt)
+	{
+		if (*fmt == '@')
+		{
+			fmt++;
+			int idx = *fmt - '0';
+			fprintf(f, "%s", s[idx]);
+		}
+		else
+		{
+			fputc(*fmt, f);
+		}
+		fmt++;
+	}
+	va_end(ap);
+}
+
 void printH(int aIfaceNo)
 {
 	Iface * iface = gIface[aIfaceNo];
@@ -414,6 +445,8 @@ void printCpp(int aIfaceNo)
 			fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmType[j].c_str());
 			if (iface->mMethod[i]->mParmType[j] == "DWORD") fprintf(f, "[%%d]");
 			else
+			if (iface->mMethod[i]->mParmType[j] == "ULONG") fprintf(f, "[%%d]");
+			else
 			if (iface->mMethod[i]->mParmType[j] == "HWND") fprintf(f, "[%%08x]");			
 			else
 			if (iface->mMethod[i]->mParmType[j][0] == 'L' && iface->mMethod[i]->mParmType[j][1] == 'P') fprintf(f, "[%%08x]");			
@@ -422,12 +455,14 @@ void printCpp(int aIfaceNo)
 		for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 		{
 			if ((iface->mMethod[i]->mParmType[j] == "DWORD") ||
+			   (iface->mMethod[i]->mParmType[j] == "ULONG") ||
 			   (iface->mMethod[i]->mParmType[j] == "HWND") ||
 			   (iface->mMethod[i]->mParmType[j][0] == 'L' && iface->mMethod[i]->mParmType[j][1] == 'P'))
 			 fprintf(f, ", %s", iface->mMethod[i]->mParmName[j].c_str());
 		}
 		fprintf(f, ");\n");
 
+		fprintf(f, "  pushtab();\n");
 
 		if (iface->mMethod[i]->mFuncName == "Release")
 		{
@@ -436,13 +471,14 @@ void printCpp(int aIfaceNo)
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
 			           "  if (x == 0)\n"
 				       "  {\n"
 					   "    mOriginal = NULL;\n"
-					   "    logf(\"\tRef count zero, calling dtor\\n\");\n"
+					   "    logf(\"Ref count zero, calling dtor\\n\");\n"
 					   "    delete this;\n"
 					   "  }\n"
+					   "  poptab();\n"
 			           "  return x;\n");
 		}
 		else
@@ -453,9 +489,10 @@ void printCpp(int aIfaceNo)
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n");
-			fprintf(f, "  logf(\" -> return [%%d]\\n\", x);\n");
+			fprintf(f, "  logfc(\" -> return [%%d]\\n\", x);\n");
             fprintf(f, "  genericQueryInterface(%s, %s);\n", iface->mMethod[i]->mParmName[0].c_str(), iface->mMethod[i]->mParmName[1].c_str());
-			fprintf(f, "  return x;\n");
+			fprintf(f, "  poptab();\n"
+			           "  return x;\n");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "CreateClipper")
@@ -465,14 +502,15 @@ void printCpp(int aIfaceNo)
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
 			           "  if (x == DD_OK)\n"
 			           "  {\n"
 			           "    myIDirectDrawClipper *nc = new myIDirectDrawClipper(*b);\n"
 					   "    wrapstore(*b, nc);\n"
 			           "    *b = nc;\n"
-					   "    logf(\"\tWrapped clipper.\\n\");\n"
+					   "    logf(\"Wrapped clipper.\\n\");\n"
 			           "  }\n"
+					   "  poptab();\n"
 			           "  return x;\n");
 		}
 		else
@@ -483,14 +521,15 @@ void printCpp(int aIfaceNo)
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
 			           "  if (x == DD_OK)\n"
 			           "  {\n"
 			           "    myIDirectDrawPalette *np = new myIDirectDrawPalette(*c);\n"
 					   "    wrapstore(*c, np);\n"
 			           "    *c = np;\n"
-					   "    logf(\"\tWrapped palette.\\n\");\n"
+					   "    logf(\"Wrapped palette.\\n\");\n"
 			           "  }\n"
+					   "  poptab();\n"
 			           "  return x;\n");
 		}
 		else
@@ -505,14 +544,15 @@ void printCpp(int aIfaceNo)
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
 			           "  if (x == DD_OK)\n"
 			           "  {\n"
 			           "    %s *ns = new %s(*b);\n"
 					   "    wrapstore(*b, ns);\n"
 			           "    *b = ns;\n"
-					   "    logf(\"\tWrapped surface.\\n\");\n"
+					   "    logf(\"Wrapped surface.\\n\");\n"
 			           "  }\n"
+					   "  poptab();\n"
 			           "  return x;\n", surftype, surftype);
 		}
 		else
@@ -527,14 +567,15 @@ void printCpp(int aIfaceNo)
 			for (j = 1; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
 			           "  if (x == DD_OK)\n"
 			           "  {\n"
 			           "    %s *ns = new %s(*b);\n"
 					   "    wrapstore(*b, ns);\n"
 			           "    *b = ns;\n"
-					   "    logf(\"\tWrapped surface.\\n\");\n"
+					   "    logf(\"Wrapped surface.\\n\");\n"
 			           "  }\n"
+					   "  poptab();\n"
 			           "  return x;\n", surftype, surftype);
 		}
 		else
@@ -548,14 +589,15 @@ void printCpp(int aIfaceNo)
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
 			           "  if (x == DD_OK)\n"
 			           "  {\n"
 			           "    %s *ns = new %s(*b);\n"
 					   "    wrapstore(*b, ns);\n"
 			           "    *b = ns;\n"
-					   "    logf(\"\tWrapped surface.\\n\");\n"
+					   "    logf(\"Wrapped surface.\\n\");\n"
 			           "  }\n"
+					   "  poptab();\n"
 			           "  return x;\n", surftype, surftype);
 		}
 		else
@@ -574,7 +616,8 @@ void printCpp(int aIfaceNo)
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
+					   "  poptab();\n"
 					   "  return x;\n");
 		}
 		else
@@ -593,7 +636,8 @@ void printCpp(int aIfaceNo)
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
+					   "  poptab();\n"
 					   "  return x;\n");
 		}
 		else
@@ -612,7 +656,8 @@ void printCpp(int aIfaceNo)
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
+					   "  poptab();\n"
 					   "  return x;\n");
 		}
 		else
@@ -631,7 +676,8 @@ void printCpp(int aIfaceNo)
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
+					   "  poptab();\n"
 					   "  return x;\n");
 		}
 		else
@@ -650,7 +696,8 @@ void printCpp(int aIfaceNo)
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
+					   "  poptab();\n"
 					   "  return x;\n");
 		}
 		else
@@ -669,7 +716,8 @@ void printCpp(int aIfaceNo)
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
+					   "  poptab();\n"
 					   "  return x;\n");
 		}
 		else
@@ -688,7 +736,8 @@ void printCpp(int aIfaceNo)
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
+					   "  poptab();\n"
 					   "  return x;\n");
 		}
 		else
@@ -705,7 +754,8 @@ void printCpp(int aIfaceNo)
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
+					   "  poptab();\n"
 					   "  return x;\n");
 		}
 		else
@@ -726,8 +776,9 @@ void printCpp(int aIfaceNo)
 					else
 						fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 				fprintf(f, ");\n"
-						   "  logf(\" -> return [%%d]\\n\", x);\n"
-					   "  return x;\n");
+						   "  logfc(\" -> return [%%d]\\n\", x);\n"
+						   "  poptab();\n"
+					       "  return x;\n");
 			}
 			else
 			{
@@ -742,7 +793,8 @@ void printCpp(int aIfaceNo)
 					else
 						fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 				fprintf(f, ");\n"
-						   "  logf(\" -> return [%%d]\\n\", x);\n"
+						   "  logfc(\" -> return [%%d]\\n\", x);\n"
+						   "  poptab();\n"
 					   "  return x;\n");
 			}
 		}
@@ -765,14 +817,15 @@ void printCpp(int aIfaceNo)
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 				}
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
 			           "  if (x == DD_OK)\n"
 			           "  {\n"
 			           "    %s *ns = new %s(*c);\n"
 					   "    wrapstore(*c, ns);\n"
 			           "    *c = ns;\n"
-					   "    logf(\"\tWrapped device.\\n\");\n"
+					   "    logf(\"Wrapped device.\\n\");\n"
 			           "  }\n"
+					   "  poptab();\n"
 			           "  return x;\n", devtype, devtype);
 		}
 		else
@@ -798,7 +851,8 @@ void printCpp(int aIfaceNo)
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 				}
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
+					   "  poptab();\n"
 			           "  return x;\n");
 		}
 		else
@@ -817,7 +871,8 @@ void printCpp(int aIfaceNo)
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 				}
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
+					   "  poptab();\n"
 			           "  return x;\n");
 		}
 		else
@@ -831,7 +886,8 @@ void printCpp(int aIfaceNo)
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
+					   "  poptab();\n"
 					   "  return x;\n");
 		}
 		else
@@ -845,7 +901,8 @@ void printCpp(int aIfaceNo)
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
+					   "  poptab();\n"
 					   "  return x;\n");
 		}
 		else
@@ -864,7 +921,8 @@ void printCpp(int aIfaceNo)
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
+					   "  poptab();\n"
 					   "  return x;\n");
 		}
 		else
@@ -878,14 +936,15 @@ void printCpp(int aIfaceNo)
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
 			           "  if (x == DD_OK)\n"
 			           "  {\n"
 			           "    %s *ns = new %s(*b);\n"
 					   "    wrapstore(*b, ns);\n"
 			           "    *b = ns;\n"
-					   "    logf(\"\tWrapped vertex buffer.\\n\");\n"
+					   "    logf(\"Wrapped vertex buffer.\\n\");\n"
 			           "  }\n"
+					   "  poptab();\n"
 			           "  return x;\n", buftype, buftype);
 		}
 		else
@@ -896,14 +955,15 @@ void printCpp(int aIfaceNo)
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
 			           "  if (x == DD_OK)\n"
 			           "  {\n"
 			           "    myIDirect3DLight *ns = new myIDirect3DLight(*a);\n"
 					   "    wrapstore(*a, ns);\n"
 			           "    *a = ns;\n"
-					   "    logf(\"\tWrapped light.\\n\");\n"
+					   "    logf(\"Wrapped light.\\n\");\n"
 			           "  }\n"
+					   "  poptab();\n"
 			           "  return x;\n");
 		}
 		else
@@ -918,14 +978,15 @@ void printCpp(int aIfaceNo)
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
 			           "  if (x == DD_OK)\n"
 			           "  {\n"
 			           "    %s *ns = new %s(*a);\n"
 					   "    wrapstore(*a, ns);\n"
 			           "    *a = ns;\n"
-					   "    logf(\"\tWrapped material.\\n\");\n"
+					   "    logf(\"Wrapped material.\\n\");\n"
 			           "  }\n"
+					   "  poptab();\n"
 			           "  return x;\n", mattype, mattype);
 		}
 		else
@@ -940,14 +1001,15 @@ void printCpp(int aIfaceNo)
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
 			           "  if (x == DD_OK)\n"
 			           "  {\n"
 			           "    %s *ns = new %s(*a);\n"
 					   "    wrapstore(*a, ns);\n"
 			           "    *a = ns;\n"
-					   "    logf(\"\tWrapped viewport.\\n\");\n"
+					   "    logf(\"Wrapped viewport.\\n\");\n"
 			           "  }\n"
+					   "  poptab();\n"
 			           "  return x;\n", mattype, mattype);
 		}
 		else
@@ -964,7 +1026,8 @@ void printCpp(int aIfaceNo)
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
+					   "  poptab();\n"
 					   "  return x;\n");
 		}
 		else
@@ -982,7 +1045,8 @@ void printCpp(int aIfaceNo)
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
+					   "  poptab();\n"
 					   "  return x;\n");
 		}
 		else
@@ -996,7 +1060,8 @@ void printCpp(int aIfaceNo)
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
+					   "  poptab();\n"
 					   "  return x;\n");
 		}
 		else
@@ -1014,7 +1079,8 @@ void printCpp(int aIfaceNo)
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
+					   "  poptab();\n"
 					   "  return x;\n");
 		}
 		else
@@ -1031,7 +1097,8 @@ void printCpp(int aIfaceNo)
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
+					   "  poptab();\n"
 					   "  return x;\n");
 		}
 		else
@@ -1048,56 +1115,92 @@ void printCpp(int aIfaceNo)
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
+			           "  logfc(\" -> return [%%d]\\n\", x);\n"
+					   "  poptab();\n"
 					   "  return x;\n");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "GetPalette")
 		{
 			char * datatype = "LPDIRECTDRAWPALETTE";
+			char * wrapname = "myIDirectDrawPalette";
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
-			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
-					   "  *%s = (%s)wrapfetch(*%s);\n"
+			printTemplate(f,
+				       ");\n"
+			           "  logfc(\" -> return [%d]\\n\", x);\n"
+					   "  @0 n = (@0)wrapfetch(*@1);\n"
+					   "  if (n == NULL)\n"
+					   "  {\n"
+					   "    n = (@0)new @2(*@1);\n"
+					   "    logf(\"Wrapped palette\\n\");\n"
+					   "  }\n"
+					   "  *@1 = n;\n"
+					   "  poptab();\n"
 					   "  return x;\n", 
-					   iface->mMethod[i]->mParmName[0].c_str(), 
-					   datatype,
-					   iface->mMethod[i]->mParmName[0].c_str());
+					   /* 0 */ datatype,
+					   /* 1 */ iface->mMethod[i]->mParmName[0].c_str(), 
+					   /* 2 */ wrapname,					   
+					   0);
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "GetClipper")
 		{
 			char * datatype = "LPDIRECTDRAWCLIPPER";
+			char * wrapname = "myIDirectDrawClipper";
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
-			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
-					   "  *%s = (%s)wrapfetch(*%s);\n"
+			printTemplate(f,
+				       ");\n"
+			           "  logfc(\" -> return [%d]\\n\", x);\n"
+					   "  @0 n = (@0)wrapfetch(*@1);\n"
+					   "  if (n == NULL)\n"
+					   "  {\n"
+					   "    n = (@0)new @2(*@1);\n"
+					   "    logf(\"Wrapped clipper\\n\");\n"
+					   "  }\n"
+					   "  *@1 = n;\n"
+					   "  poptab();\n"
 					   "  return x;\n", 
-					   iface->mMethod[i]->mParmName[0].c_str(), 
-					   datatype,
-					   iface->mMethod[i]->mParmName[0].c_str());
+					   /* 0 */ datatype,
+					   /* 1 */ iface->mMethod[i]->mParmName[0].c_str(), 
+					   /* 2 */ wrapname,					   
+					   0);
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "GetDDInterface")
 		{
 			char * datatype = "LPVOID";
+			char * datatype2 = "IDirectDraw2 *";
+			char * wrapname = "myIDirectDraw2";
+			if (iface->mName == "IDirectDrawSurface3") { wrapname = "myIDirectDraw3"; datatype2 = "IDirectDraw3 *"; }
+			if (iface->mName == "IDirectDrawSurface4") { wrapname = "myIDirectDraw4"; datatype2 = "IDirectDraw4 *"; }
+			if (iface->mName == "IDirectDrawSurface7") { wrapname = "myIDirectDraw7"; datatype2 = "IDirectDraw7 *"; }
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
-			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
-					   "  *%s = (%s)wrapfetch(*%s);\n"
+			printTemplate(f,
+				       ");\n"
+			           "  logfc(\" -> return [%d]\\n\", x);\n"
+					   "  @0 n = (@0)wrapfetch(*@1);\n"
+					   "  if (n == NULL)\n"
+					   "  {\n"
+					   "    n = (@0)new @2((@3)*@1);\n"
+					   "    logf(\"Wrapped ddraw\\n\");\n"
+					   "  }\n"
+					   "  *@1 = n;\n"
+					   "  poptab();\n"
 					   "  return x;\n", 
-					   iface->mMethod[i]->mParmName[0].c_str(), 
-					   datatype,
-					   iface->mMethod[i]->mParmName[0].c_str());
+					   /* 0 */ datatype,
+					   /* 1 */ iface->mMethod[i]->mParmName[0].c_str(), 
+					   /* 2 */ wrapname,		
+					   /* 3 */ datatype2,
+					   0);
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "GetAttachedSurface")
@@ -1111,82 +1214,112 @@ void printCpp(int aIfaceNo)
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
-			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
-					   "  %s* n = (%s *)wrapfetch(*%s);\n"
+
+			printTemplate(f,
+				       ");\n"
+			           "  logfc(\" -> return [%d]\\n\", x);\n"
+					   "  @0* n = (@0 *)wrapfetch(*@1);\n"
 					   "  if (n == NULL)\n"
 					   "  {\n"
-					   "    n = (%s *)new %s(*%s);\n"
-					   "    logf(\"\tWrapped attached surface\\n\");\n"
+					   "    n = (@0 *)new @2(*@1);\n"
+					   "    logf(\"Wrapped attached surface\\n\");\n"
 					   "  }\n"
-					   "  *%s = n;\n"
+					   "  *@1 = n;\n"
+					   "  poptab();\n"
 					   "  return x;\n", 
-					   iface->mName.c_str(),
-					   iface->mName.c_str(),
-					   iface->mMethod[i]->mParmName[1].c_str(), 
-					   iface->mName.c_str(),
-					   wrapname,					   
-					   iface->mMethod[i]->mParmName[1].c_str(),
-					   iface->mMethod[i]->mParmName[1].c_str());
+					   /* 0 */ iface->mName.c_str(),
+					   /* 1 */ iface->mMethod[i]->mParmName[1].c_str(), 
+					   /* 2 */ wrapname,					   
+					   0);
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "GetDirect3D")
 		{
 			char * datatype = "LPDIRECT3D";
-			if (iface->mName == "IDirect3DDevice2") datatype = "LPDIRECT3D2";
-			if (iface->mName == "IDirect3DDevice3") datatype = "LPDIRECT3D3";
-			if (iface->mName == "IDirect3DDevice7") datatype = "LPDIRECT3D7";
+			char * wrapname = "myIDirect3D";
+			if (iface->mName == "IDirect3DDevice2") { datatype = "LPDIRECT3D2"; wrapname = "myIDirect3D2"; }
+			if (iface->mName == "IDirect3DDevice3") { datatype = "LPDIRECT3D3"; wrapname = "myIDirect3D3"; }
+			if (iface->mName == "IDirect3DDevice7") { datatype = "LPDIRECT3D7"; wrapname = "myIDirect3D7"; }
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
-			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
-					   "  *%s = (%s)wrapfetch(*%s);\n"
+			printTemplate(f,
+				       ");\n"
+			           "  logfc(\" -> return [%d]\\n\", x);\n"
+					   "  @0 n = (@0)wrapfetch(*@1);\n"
+					   "  if (n == NULL)\n"
+					   "  {\n"
+					   "    n = (@0)new @2(*@1);\n"
+					   "    logf(\"Wrapped ddraw\\n\");\n"
+					   "  }\n"
+					   "  *@1 = n;\n"
+					   "  poptab();\n"
 					   "  return x;\n", 
-					   iface->mMethod[i]->mParmName[0].c_str(), 
-					   datatype,
-					   iface->mMethod[i]->mParmName[0].c_str());
+					   /* 0 */ datatype,
+					   /* 1 */ iface->mMethod[i]->mParmName[0].c_str(), 
+					   /* 2 */ wrapname,					   
+					   0);
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "GetRenderTarget")
 		{
 			char * datatype = "LPDIRECTDRAWSURFACE";
-			if (iface->mName == "IDirect3DDevice3") datatype = "LPDIRECTDRAWSURFACE4";
-			if (iface->mName == "IDirect3DDevice7") datatype = "LPDIRECTDRAWSURFACE7";
+			char * wrapname = "myIDirectDrawSurface";
+			if (iface->mName == "IDirect3DDevice3") { datatype = "LPDIRECTDRAWSURFACE4"; wrapname="myIDirectDrawSurface4"; }
+			if (iface->mName == "IDirect3DDevice7") { datatype = "LPDIRECTDRAWSURFACE7"; wrapname="myIDirectDrawSurface7"; }
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
-			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
-					   "  *%s = (%s)wrapfetch(*%s);\n"
+			printTemplate(f,
+				       ");\n"
+			           "  logfc(\" -> return [%d]\\n\", x);\n"
+					   "  @0 n = (@0)wrapfetch(*@1);\n"
+					   "  if (n == NULL)\n"
+					   "  {\n"
+					   "    n = (@0)new @2(*@1);\n"
+					   "    logf(\"Wrapped surface\\n\");\n"
+					   "  }\n"
+					   "  *@1 = n;\n"
+					   "  poptab();\n"
 					   "  return x;\n", 
-					   iface->mMethod[i]->mParmName[0].c_str(), 
-					   datatype,
-					   iface->mMethod[i]->mParmName[0].c_str());
+					   /* 0 */ datatype,
+					   /* 1 */ iface->mMethod[i]->mParmName[0].c_str(), 
+					   /* 2 */ wrapname,					   
+					   0);
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "GetTexture")
 		{
 			char * datatype = "LPDIRECT3DTEXTURE2";
-			if (iface->mName == "IDirect3DDevice7") datatype = "LPDIRECTDRAWSURFACE7";
+			char * wrapname = "myIDirect3DTexture2";
+			if (iface->mName == "IDirect3DDevice7") { datatype = "LPDIRECTDRAWSURFACE7"; wrapname = "myIDirectDrawSurface7"; }
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
-			fprintf(f, ");\n"
-			           "  logf(\" -> return [%%d]\\n\", x);\n"
-					   "  *%s = (%s)wrapfetch(*%s);\n"
+			printTemplate(f,
+				       ");\n"
+			           "  logfc(\" -> return [%d]\\n\", x);\n"
+					   "  @0 n = (@0)wrapfetch(*@1);\n"
+					   "  if (n == NULL)\n"
+					   "  {\n"
+					   "    n = (@0)new @2(*@1);\n"
+					   "    logf(\"Wrapped texture\\n\");\n"
+					   "  }\n"
+					   "  *@1 = n;\n"
+					   "  poptab();\n"
 					   "  return x;\n", 
-					   iface->mMethod[i]->mParmName[1].c_str(), 
-					   datatype,
-					   iface->mMethod[i]->mParmName[1].c_str());
+					   /* 0 */ datatype,
+					   /* 1 */ iface->mMethod[i]->mParmName[1].c_str(), 
+					   /* 2 */ wrapname,					   
+					   0);
 		}
 		else
 		if (0)
 		{
-			fprintf(f, "  logf(\"\\n\t**** NOT IMPLEMENTED\\n\");\n");
+			fprintf(f, "  logf(\"\\n**** NOT IMPLEMENTED\\n\");\n");
 			fprintf(f, "  return E_NOTIMPL;\n");
 		}
 		else
@@ -1198,12 +1331,14 @@ void printCpp(int aIfaceNo)
 				fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n");
 			if (iface->mMethod[i]->mRetType == "HRESULT" ||
-				iface->mMethod[i]->mRetType == "DWORD")
-				fprintf(f, "  logf(\" -> return [%%d]\\n\", x);\n");
+				iface->mMethod[i]->mRetType == "DWORD" ||
+				iface->mMethod[i]->mRetType == "ULONG")
+				fprintf(f, "  logfc(\" -> return [%%d]\\n\", x);\n");
 			else
 				fprintf(f, "  logf(\"\\n\", x);\n");
 
-			fprintf(f, "  return x;\n");
+			fprintf(f, "  poptab();\n"
+				       "  return x;\n");
 		}
 		
 		fprintf(f, "}\n"

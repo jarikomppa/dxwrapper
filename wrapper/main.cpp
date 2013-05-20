@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #define STRICT
 #define WIN32_LEAN_AND_MEAN
 
@@ -20,6 +21,35 @@ bool _stdcall DllMain(HANDLE, DWORD dwReason, LPVOID) {
 	return true;
 }
 
+void logfc(char * fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	FILE *f = fopen("wrapper.log", "a");
+	if (f)
+	{
+		vfprintf(f, fmt, ap);
+		fclose(f);
+	}
+	va_end(ap);
+}
+
+int gTabStops = 0;
+
+void pushtab()
+{
+	gTabStops++;
+}
+
+void poptab()
+{
+	gTabStops--;
+	if (gTabStops < 0)
+		gTabStops = 0;
+}
+
+int gLastTick = 0;
+
 void logf(char * fmt, ...)
 {
 	va_list ap;
@@ -27,6 +57,11 @@ void logf(char * fmt, ...)
 	FILE *f = fopen("wrapper.log", "a");
 	if (f)
 	{
+		int tick = GetTickCount();
+		fprintf(f, "[%+8dms] ", tick - gLastTick);
+		gLastTick = tick;
+		int i;
+		for (i = 0; i < gTabStops; i++) fputc('\t', f);
 		vfprintf(f, fmt, ap);
 		fclose(f);
 	}
@@ -71,7 +106,7 @@ void wrapstore(void * aOriginal, void * aWrapper)
 		{
 			if (gWrapPair[i].mOriginal == aOriginal)
 			{
-				gWrapPair[i].mWrapper == aWrapper;
+				gWrapPair[i].mWrapper = aWrapper;
 				return;
 			}
 		}
@@ -79,7 +114,7 @@ void wrapstore(void * aOriginal, void * aWrapper)
 
 	if (gWrapPairs >= MAX_PAIRS)
 	{
-		logf("\n\t**** Max number of wrappers exceeded - adjust and recompile\n");
+		logf("**** Max number of wrappers exceeded - adjust and recompile\n");
 	}
 }
 
@@ -89,7 +124,7 @@ void * wrapfetch(void * aOriginal)
 
 	if (ret == NULL)
 	{
-		logf("\t**** Wrapped object not found - returning null - brace yourself\n");
+		logf("Pre-wrapped object not found - returning null\n");
 	}
 	return ret;
 }
