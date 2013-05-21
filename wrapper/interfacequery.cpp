@@ -12,8 +12,7 @@ void genericQueryInterface(REFIID a, void **ptr)
 			*ptr = (void*)new my##x(*(x **)ptr); \
 			logf("Wrapped: " #x "\n");\
 			wrapstore(orig, *ptr);\
-			return;\
-		} 
+		}
 
 	logf("Interface Query: {%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}\n",
 		a.Data1, a.Data2, a.Data3,
@@ -21,6 +20,8 @@ void genericQueryInterface(REFIID a, void **ptr)
 		a.Data4[4],a.Data4[5],a.Data4[6],a.Data4[7]);
 
 	void * orig = *ptr;
+
+	pushtab();
 
 	QUERYINTERFACE(IDirect3D);
 	QUERYINTERFACE(IDirect3D2);
@@ -56,5 +57,11 @@ void genericQueryInterface(REFIID a, void **ptr)
 	QUERYINTERFACE(IDirectDrawSurface3);
 	QUERYINTERFACE(IDirectDrawSurface4);
 	QUERYINTERFACE(IDirectDrawSurface7);
-	logf("\t**** Unknown interface - not wrapped\n");
+
+	if (orig == *ptr)
+	{
+		logf("**** Unknown interface - not wrapped\n");
+	}
+
+	poptab();
 }

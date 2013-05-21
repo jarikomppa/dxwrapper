@@ -9,23 +9,37 @@
 #include <varargs.h>
 //#include "ddoutput.h"
 
+CRITICAL_SECTION gCS;
+
 bool _stdcall SetWindowPosHook(HWND, HWND, int, int, int, int, int) { return true; }
 bool _stdcall SetWindowLongHook(HWND, int, int) { return true; }
 bool _stdcall ShowWindowHook(HWND, int) { return true; }
 
 bool _stdcall DllMain(HANDLE, DWORD dwReason, LPVOID) {
 	if(dwReason==DLL_PROCESS_ATTACH) {
+		InitializeCriticalSection(&gCS);
 	} else if(dwReason==DLL_PROCESS_DETACH) {
 		//d3d9Exit();
+		DeleteCriticalSection(&gCS);
 	}
 	return true;
+}
+
+int gLoglines = 0;
+
+FILE * openlog()
+{
+	gLoglines++;
+	char fname[]="wrapper0.log";
+	fname[7] = '0' + (gLoglines >> 16); // new file every ~64k lines
+	return fopen(fname, "a");
 }
 
 void logfc(char * fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
-	FILE *f = fopen("wrapper.log", "a");
+	FILE *f = openlog();
 	if (f)
 	{
 		vfprintf(f, fmt, ap);
@@ -48,16 +62,28 @@ void poptab()
 		gTabStops = 0;
 }
 
+long long milliseconds_now() {
+    static LARGE_INTEGER s_frequency;
+    static BOOL s_use_qpc = QueryPerformanceFrequency(&s_frequency);
+    if (s_use_qpc) {
+        LARGE_INTEGER now;
+        QueryPerformanceCounter(&now);
+        return (1000LL * now.QuadPart) / s_frequency.QuadPart;
+    } else {
+        return GetTickCount();
+    }
+}
+
 int gLastTick = 0;
 
 void logf(char * fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
-	FILE *f = fopen("wrapper.log", "a");
+	FILE *f = openlog();
 	if (f)
 	{
-		int tick = GetTickCount();
+		int tick = (int)milliseconds_now();
 		fprintf(f, "[%+8dms] ", tick - gLastTick);
 		gLastTick = tick;
 		int i;
@@ -74,7 +100,7 @@ struct WrapPair
 	void * mWrapper;
 };
 
-#define MAX_PAIRS 4096
+#define MAX_PAIRS 65536
 WrapPair gWrapPair[MAX_PAIRS];
 int gWrapPairs = 0;
 

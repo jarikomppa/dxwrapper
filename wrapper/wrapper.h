@@ -42,6 +42,8 @@
 #include "myIDirectDrawSurface4.h"
 #include "myIDirectDrawSurface7.h"
 
+extern CRITICAL_SECTION gCS;
+
 void logf(char * format, ...);
 void logfc(char * format, ...);
 void genericQueryInterface(REFIID riid, LPVOID * ppvObj);
