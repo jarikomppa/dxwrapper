@@ -25,18 +25,20 @@ bool _stdcall DllMain(HANDLE, DWORD dwReason, LPVOID) {
 	return true;
 }
 
+#define DISABLE_LOGGING
+
 int gLoglines = 0;
 
 FILE * openlog()
 {
-	gLoglines++;
 	char fname[]="wrapper0.log";
-	fname[7] = '0' + (gLoglines >> 16); // new file every ~64k lines
+	fname[7] = '0' + (gLoglines >> 18); // new file every ~256k lines
 	return fopen(fname, "a");
 }
 
 void logfc(char * fmt, ...)
 {
+#ifndef DISABLE_LOGGING
 	va_list ap;
 	va_start(ap, fmt);
 	FILE *f = openlog();
@@ -46,6 +48,7 @@ void logfc(char * fmt, ...)
 		fclose(f);
 	}
 	va_end(ap);
+#endif
 }
 
 int gTabStops = 0;
@@ -78,6 +81,8 @@ int gLastTick = 0;
 
 void logf(char * fmt, ...)
 {
+#ifndef DISABLE_LOGGING
+	gLoglines++;
 	va_list ap;
 	va_start(ap, fmt);
 	FILE *f = openlog();
@@ -92,6 +97,7 @@ void logf(char * fmt, ...)
 		fclose(f);
 	}
 	va_end(ap);
+#endif
 }
 
 struct WrapPair
