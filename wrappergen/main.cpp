@@ -461,14 +461,51 @@ void printCpp(int aIfaceNo)
 			   (iface->mMethod[i]->mParmType[j][0] == 'L' && iface->mMethod[i]->mParmType[j][1] == 'P'))
 			 fprintf(f, ", %s", iface->mMethod[i]->mParmName[j].c_str());
 		}
-		fprintf(f, ");\n");
+		fprintf(f, ");\n"
+		           "  pushtab();\n");
 
-		fprintf(f, "  pushtab();\n");
+		char * d3dtype = "$Undefined$"; 
+		char * d3dwrapper = "$Undefined$"; 
+		char * ddsurfacetype = "$Undefined$";
+		char * ddtype = "$Undefined$"; 
+		char * ddwrapper = "$Undefined$"; 
+		char * d3ddevicewrapper = "$Undefined$"; 
+		char * d3dmaterialwrapper = "$Undefined$"; 
+		char * ddsurfacewrapper = "$Undefined$"; 
+		char * d3dtexturetype = "$Undefined$"; 
+		char * d3dtexturewrapper = "$Undefined$"; 
+		char * d3dvertexbufferwrapper = "$Undefined$";
+		char * d3dviewportwrapper = "$Undefined$";
 
-#define PROLOGUE \
-		"  poptab();\n" \
-		"  LeaveCriticalSection(&gCS);\n"
-
+		char * ddclippertype = "LPDIRECTDRAWCLIPPER";
+		char * ddclipperwrapper = "myIDirectDrawClipper";
+		char * ddpalettetype = "LPDIRECTDRAWPALETTE";
+		char * ddpalettewrapper = "myIDirectDrawPalette";
+		if (iface->mName == "IDirect3D") {  d3dmaterialwrapper = "myIDirect3DMaterial";  d3dviewportwrapper = "myIDirect3DViewport";  d3dvertexbufferwrapper = "myIDirect3DVertexBuffer"; }
+		if (iface->mName == "IDirect3D2") { d3dmaterialwrapper = "myIDirect3DMaterial2"; d3dviewportwrapper = "myIDirect3DViewport2"; d3dvertexbufferwrapper = "myIDirect3DVertexBuffer";  ddsurfacewrapper = "myIDirectDrawSurface";  d3ddevicewrapper = "myIDirect3DDevice2"; }
+		if (iface->mName == "IDirect3D3") { d3dmaterialwrapper = "myIDirect3DMaterial3"; d3dviewportwrapper = "myIDirect3DViewport3"; d3dvertexbufferwrapper = "myIDirect3DVertexBuffer";  ddsurfacewrapper = "myIDirectDrawSurface4"; d3ddevicewrapper = "myIDirect3DDevice3"; }
+		if (iface->mName == "IDirect3D7") {                                                                                           d3dvertexbufferwrapper = "myIDirect3DVertexBuffer7"; ddsurfacewrapper = "myIDirectDrawSurface7"; d3ddevicewrapper = "myIDirect3DDevice7"; }
+		if (iface->mName == "IDirect3DDevice") {  ddsurfacewrapper = "myIDirectDrawSurface";  d3dtexturewrapper = "myIDirect3DTexture";    d3dviewportwrapper = "myIDirect3DViewport";          d3dtype = "LPDIRECT3D";  d3dwrapper = "myIDirect3D";   ddsurfacetype = "LPDIRECTDRAWSURFACE";  d3dviewportwrapper = "myIDirect3DViewport"; }
+		if (iface->mName == "IDirect3DDevice2") { ddsurfacewrapper = "myIDirectDrawSurface";  d3dtexturewrapper = "myIDirect3DTexture";    d3dviewportwrapper = "myIDirect3DViewport2";         d3dtype = "LPDIRECT3D2"; d3dwrapper = "myIDirect3D2";  ddsurfacetype = "LPDIRECTDRAWSURFACE";  d3dviewportwrapper = "myIDirect3DViewport3"; }
+		if (iface->mName == "IDirect3DDevice3") { ddsurfacewrapper = "myIDirectDrawSurface4"; d3dtexturewrapper = "myIDirect3DTexture2";   d3dvertexbufferwrapper = "myIDirect3DVertexBuffer";  d3dtype = "LPDIRECT3D3"; d3dwrapper = "myIDirect3D3";  ddsurfacetype = "LPDIRECTDRAWSURFACE4"; d3dviewportwrapper = "myIDirect3DViewport3"; d3dtexturetype = "LPDIRECT3DTEXTURE2";   }
+		if (iface->mName == "IDirect3DDevice7") { ddsurfacewrapper = "myIDirectDrawSurface7"; d3dtexturewrapper = "myIDirectDrawSurface7"; d3dvertexbufferwrapper = "myIDirect3DVertexBuffer7"; d3dtype = "LPDIRECT3D7"; d3dwrapper = "myIDirect3D7";  ddsurfacetype = "LPDIRECTDRAWSURFACE7"; d3dviewportwrapper = "myIDirect3DViewport3"; d3dtexturetype = "LPDIRECTDRAWSURFACE7"; }
+		if (iface->mName == "IDirect3DMaterial")  d3ddevicewrapper = "myIDirect3DDevice";
+		if (iface->mName == "IDirect3DMaterial2") d3ddevicewrapper = "myIDirect3DDevice2";
+		if (iface->mName == "IDirect3DMaterial3") d3ddevicewrapper = "myIDirect3DDevice3";
+		if (iface->mName == "IDirect3DTexture") {  d3ddevicewrapper = "myIDirect3DDevice";  d3dtexturewrapper = "myIDirect3DTexture"; }
+		if (iface->mName == "IDirect3DTexture2") { d3ddevicewrapper = "myIDirect3DDevice2"; d3dtexturewrapper = "myIDirect3DTexture2"; }
+		if (iface->mName == "IDirect3DVertexBuffer") {  d3dvertexbufferwrapper = "myIDirect3DVertexBuffer";  d3ddevicewrapper = "myIDirect3DDevice3"; }
+		if (iface->mName == "IDirect3DVertexBuffer7") { d3dvertexbufferwrapper = "myIDirect3DVertexBuffer7"; d3ddevicewrapper = "myIDirect3DDevice7"; }
+		if (iface->mName == "IDirectDraw")  ddsurfacewrapper = "myIDirectDrawSurface";
+		if (iface->mName == "IDirectDraw2") ddsurfacewrapper = "myIDirectDrawSurface";
+		if (iface->mName == "IDirectDraw3") ddsurfacewrapper = "myIDirectDrawSurface";
+		if (iface->mName == "IDirectDraw4") ddsurfacewrapper = "myIDirectDrawSurface4";
+		if (iface->mName == "IDirectDraw7") ddsurfacewrapper = "myIDirectDrawSurface7";
+		if (iface->mName == "IDirectDrawSurface")  { ddsurfacewrapper = "myIDirectDrawSurface"; }
+		if (iface->mName == "IDirectDrawSurface2") { ddsurfacewrapper = "myIDirectDrawSurface2"; ddwrapper = "myIDirectDraw2"; ddtype = "IDirectDraw2 *";}
+		if (iface->mName == "IDirectDrawSurface3") { ddsurfacewrapper = "myIDirectDrawSurface3"; ddwrapper = "myIDirectDraw3"; ddtype = "IDirectDraw3 *"; }
+		if (iface->mName == "IDirectDrawSurface4") { ddsurfacewrapper = "myIDirectDrawSurface4"; ddwrapper = "myIDirectDraw4"; ddtype = "IDirectDraw4 *"; }
+		if (iface->mName == "IDirectDrawSurface7") { ddsurfacewrapper = "myIDirectDrawSurface7"; ddwrapper = "myIDirectDraw7"; ddtype = "IDirectDraw7 *"; }
 
 		if (iface->mMethod[i]->mFuncName == "Release")
 		{
@@ -481,11 +518,8 @@ void printCpp(int aIfaceNo)
 			           "  if (x == 0)\n"
 				       "  {\n"
 					   "    mOriginal = NULL;\n"
-//					   "    logf(\"Ref count zero, calling dtor\\n\");\n"
 					   "    delete this;\n"
-					   "  }\n"
-					   PROLOGUE
-			           "  return x;\n");
+					   "  }\n");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "QueryInterface")
@@ -497,8 +531,6 @@ void printCpp(int aIfaceNo)
 			fprintf(f, ");\n");
 			fprintf(f, "  logfc(\" -> return %%d\\n\", x);\n");
             fprintf(f, "  if (x == 0) genericQueryInterface(%s, %s);\n", iface->mMethod[i]->mParmName[0].c_str(), iface->mMethod[i]->mParmName[1].c_str());
-			fprintf(f, PROLOGUE
-			           "  return x;\n");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "CreateClipper")
@@ -515,9 +547,7 @@ void printCpp(int aIfaceNo)
 					   "    wrapstore(*b, nc);\n"
 			           "    *b = nc;\n"
 					   "    logf(\"Wrapped clipper.\\n\");\n"
-			           "  }\n"
-					   PROLOGUE
-			           "  return x;\n");
+			           "  }\n");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "CreatePalette")
@@ -534,41 +564,30 @@ void printCpp(int aIfaceNo)
 					   "    wrapstore(*c, np);\n"
 			           "    *c = np;\n"
 					   "    logf(\"Wrapped palette.\\n\");\n"
-			           "  }\n"
-					   PROLOGUE
-			           "  return x;\n");
+			           "  }\n");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "CreateSurface")
 		{
-			char * surftype = "myIDirectDrawSurface";
-			if (iface->mName == "IDirectDraw7") surftype = "myIDirectDrawSurface7";
-			if (iface->mName == "IDirectDraw4") surftype = "myIDirectDrawSurface4";
-
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
-			fprintf(f, ");\n"
-			           "  logfc(\" -> return %%d\\n\", x);\n"
+			printTemplate(f, ");\n"
+			           "  logfc(\" -> return %d\\n\", x);\n"
 			           "  if (x == DD_OK)\n"
 			           "  {\n"
-			           "    %s *ns = new %s(*b);\n"
+			           "    @0 *ns = new @0(*b);\n"
 					   "    wrapstore(*b, ns);\n"
 			           "    *b = ns;\n"
 					   "    logf(\"Wrapped surface.\\n\");\n"
-			           "  }\n"
-					   PROLOGUE
-			           "  return x;\n", surftype, surftype);
+			           "  }\n", ddsurfacewrapper, 0);
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "DuplicateSurface")
 		{
-			char * surftype = "myIDirectDrawSurface";
-			if (iface->mName == "IDirectDraw7") surftype = "myIDirectDrawSurface7";
-			if (iface->mName == "IDirectDraw4") surftype = "myIDirectDrawSurface4";
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
-			fprintf(f, "(%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[0].c_str(), surftype, iface->mMethod[i]->mParmName[0].c_str());
+			fprintf(f, "(%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[0].c_str(), ddsurfacewrapper, iface->mMethod[i]->mParmName[0].c_str());
 			int j;
 			for (j = 1; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
@@ -580,16 +599,11 @@ void printCpp(int aIfaceNo)
 					   "    wrapstore(*b, ns);\n"
 			           "    *b = ns;\n"
 					   "    logf(\"Wrapped surface.\\n\");\n"
-			           "  }\n"
-					   PROLOGUE
-			           "  return x;\n", surftype, surftype);
+			           "  }\n", ddsurfacewrapper, ddsurfacewrapper);
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "GetSurfaceFromDC")
 		{
-			char * surftype = "myIDirectDrawSurface";
-			if (iface->mName == "IDirectDraw7") surftype = "myIDirectDrawSurface7";
-			if (iface->mName == "IDirectDraw4") surftype = "myIDirectDrawSurface4";
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
@@ -602,221 +616,152 @@ void printCpp(int aIfaceNo)
 					   "    wrapstore(*b, ns);\n"
 			           "    *b = ns;\n"
 					   "    logf(\"Wrapped surface.\\n\");\n"
-			           "  }\n"
-					   PROLOGUE
-			           "  return x;\n", surftype, surftype);
+			           "  }\n", ddsurfacewrapper, ddsurfacewrapper);
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "AddAttachedSurface")
 		{
-			char * surftype = "myIDirectDrawSurface";
-			if (iface->mName == "IDirectDrawSurface7") surftype = "myIDirectDrawSurface7";
-			if (iface->mName == "IDirectDrawSurface4") surftype = "myIDirectDrawSurface4";
-			if (iface->mName == "IDirectDrawSurface3") surftype = "myIDirectDrawSurface3";
-			if (iface->mName == "IDirectDrawSurface2") surftype = "myIDirectDrawSurface2";
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				if (j == 0)
-					fprintf(f, "(%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), surftype, iface->mMethod[i]->mParmName[j].c_str());
+					fprintf(f, "(%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), ddsurfacewrapper, iface->mMethod[i]->mParmName[j].c_str());
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logfc(\" -> return %%d\\n\", x);\n"
-					   PROLOGUE
-					   "  return x;\n");
+			           "  logfc(\" -> return %%d\\n\", x);\n");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "Blt")
 		{
-			char * surftype = "myIDirectDrawSurface";
-			if (iface->mName == "IDirectDrawSurface7") surftype = "myIDirectDrawSurface7";
-			if (iface->mName == "IDirectDrawSurface4") surftype = "myIDirectDrawSurface4";
-			if (iface->mName == "IDirectDrawSurface3") surftype = "myIDirectDrawSurface3";
-			if (iface->mName == "IDirectDrawSurface2") surftype = "myIDirectDrawSurface2";
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				if (j == 1)
-					fprintf(f, ", (%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), surftype, iface->mMethod[i]->mParmName[j].c_str());
+					fprintf(f, ", (%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), ddsurfacewrapper, iface->mMethod[i]->mParmName[j].c_str());
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logfc(\" -> return %%d\\n\", x);\n"
-					   PROLOGUE
-					   "  return x;\n");
+			           "  logfc(\" -> return %%d\\n\", x);\n");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "BltFast")
 		{
-			char * surftype = "myIDirectDrawSurface";
-			if (iface->mName == "IDirectDrawSurface7") surftype = "myIDirectDrawSurface7";
-			if (iface->mName == "IDirectDrawSurface4") surftype = "myIDirectDrawSurface4";
-			if (iface->mName == "IDirectDrawSurface3") surftype = "myIDirectDrawSurface3";
-			if (iface->mName == "IDirectDrawSurface2") surftype = "myIDirectDrawSurface2";
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				if (j == 2)
-					fprintf(f, ", (%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), surftype, iface->mMethod[i]->mParmName[j].c_str());
+					fprintf(f, ", (%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), ddsurfacewrapper, iface->mMethod[i]->mParmName[j].c_str());
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logfc(\" -> return %%d\\n\", x);\n"
-					   PROLOGUE
-					   "  return x;\n");
+			           "  logfc(\" -> return %%d\\n\", x);\n");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "DeleteAttachedSurface")
 		{
-			char * surftype = "myIDirectDrawSurface";
-			if (iface->mName == "IDirectDrawSurface7") surftype = "myIDirectDrawSurface7";
-			if (iface->mName == "IDirectDrawSurface4") surftype = "myIDirectDrawSurface4";
-			if (iface->mName == "IDirectDrawSurface3") surftype = "myIDirectDrawSurface3";
-			if (iface->mName == "IDirectDrawSurface2") surftype = "myIDirectDrawSurface2";
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				if (j == 1)
-					fprintf(f, ", (%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), surftype, iface->mMethod[i]->mParmName[j].c_str());
+					fprintf(f, ", (%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), ddsurfacewrapper, iface->mMethod[i]->mParmName[j].c_str());
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logfc(\" -> return %%d\\n\", x);\n"
-					   PROLOGUE
-					   "  return x;\n");
+			           "  logfc(\" -> return %%d\\n\", x);\n");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "Flip")
 		{
-			char * surftype = "myIDirectDrawSurface";
-			if (iface->mName == "IDirectDrawSurface7") surftype = "myIDirectDrawSurface7";
-			if (iface->mName == "IDirectDrawSurface4") surftype = "myIDirectDrawSurface4";
-			if (iface->mName == "IDirectDrawSurface3") surftype = "myIDirectDrawSurface3";
-			if (iface->mName == "IDirectDrawSurface2") surftype = "myIDirectDrawSurface2";
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				if (j == 0)
-					fprintf(f, "(%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), surftype, iface->mMethod[i]->mParmName[j].c_str());
+					fprintf(f, "(%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), ddsurfacewrapper, iface->mMethod[i]->mParmName[j].c_str());
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logfc(\" -> return %%d\\n\", x);\n"
-					   PROLOGUE
-					   "  return x;\n");
+			           "  logfc(\" -> return %%d\\n\", x);\n");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "UpdateOverlay")
 		{
-			char * surftype = "myIDirectDrawSurface";
-			if (iface->mName == "IDirectDrawSurface7") surftype = "myIDirectDrawSurface7";
-			if (iface->mName == "IDirectDrawSurface4") surftype = "myIDirectDrawSurface4";
-			if (iface->mName == "IDirectDrawSurface3") surftype = "myIDirectDrawSurface3";
-			if (iface->mName == "IDirectDrawSurface2") surftype = "myIDirectDrawSurface2";
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				if (j == 1)
-					fprintf(f, ", (%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), surftype, iface->mMethod[i]->mParmName[j].c_str());
+					fprintf(f, ", (%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), ddsurfacewrapper, iface->mMethod[i]->mParmName[j].c_str());
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logfc(\" -> return %%d\\n\", x);\n"
-					   PROLOGUE
-					   "  return x;\n");
+			           "  logfc(\" -> return %%d\\n\", x);\n");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "UpdateOverlayZOrder")
 		{
-			char * surftype = "myIDirectDrawSurface";
-			if (iface->mName == "IDirectDrawSurface7") surftype = "myIDirectDrawSurface7";
-			if (iface->mName == "IDirectDrawSurface4") surftype = "myIDirectDrawSurface4";
-			if (iface->mName == "IDirectDrawSurface3") surftype = "myIDirectDrawSurface3";
-			if (iface->mName == "IDirectDrawSurface2") surftype = "myIDirectDrawSurface2";
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				if (j == 1)
-					fprintf(f, ", (%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), surftype, iface->mMethod[i]->mParmName[j].c_str());
+					fprintf(f, ", (%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), ddsurfacewrapper, iface->mMethod[i]->mParmName[j].c_str());
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logfc(\" -> return %%d\\n\", x);\n"
-					   PROLOGUE
-					   "  return x;\n");
+			           "  logfc(\" -> return %%d\\n\", x);\n");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "SetTexture")
 		{
-			char * surftype = "myIDirectDrawSurface7";
-			if (iface->mName == "IDirect3DDevice3") surftype = "myIDirect3DTexture2";
-
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				if (j == 1)
-					fprintf(f, ", (%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), surftype, iface->mMethod[i]->mParmName[j].c_str());
+					fprintf(f, ", (%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), d3dtexturewrapper, iface->mMethod[i]->mParmName[j].c_str());
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logfc(\" -> return %%d\\n\", x);\n"
-					   PROLOGUE
-					   "  return x;\n");
+			           "  logfc(\" -> return %%d\\n\", x);\n");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "Load")
 		{
 			if (iface->mName == "IDirect3DDevice7")
 			{
-				char * surftype = "myIDirectDrawSurface7";
-
 				fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 				int j;
 				for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 					if (j == 0)
-						fprintf(f, "(%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), surftype, iface->mMethod[i]->mParmName[j].c_str());
+						fprintf(f, "(%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), d3dtexturewrapper, iface->mMethod[i]->mParmName[j].c_str());
 					else
 					if (j == 2)
-						fprintf(f, ", (%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), surftype, iface->mMethod[i]->mParmName[j].c_str());
+						fprintf(f, ", (%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), d3dtexturewrapper, iface->mMethod[i]->mParmName[j].c_str());
 					else
 						fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 				fprintf(f, ");\n"
-						   "  logfc(\" -> return %%d\\n\", x);\n"
-						   PROLOGUE
-					       "  return x;\n");
+						   "  logfc(\" -> return %%d\\n\", x);\n");
 			}
 			else
 			{
-				char * surftype = "myIDirect3DTexture";
-				if (iface->mName == "IDirect3DTexture2") surftype = "myIDirect3DTexture2";
-
 				fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 				int j;
 				for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 					if (j == 0)
-						fprintf(f, "(%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), surftype, iface->mMethod[i]->mParmName[j].c_str());
+						fprintf(f, "(%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), d3dtexturewrapper, iface->mMethod[i]->mParmName[j].c_str());
 					else
 						fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 				fprintf(f, ");\n"
-						   "  logfc(\" -> return %%d\\n\", x);\n"
-						   PROLOGUE
-						   "  return x;\n");
+						   "  logfc(\" -> return %%d\\n\", x);\n");
 			}
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "CreateDevice")
 		{
-			char * surftype = "myIDirectDrawSurface";
-			char * devtype = "myIDirect3DDevice2";
-			if (iface->mName == "IDirect3D7") { surftype = "myIDirectDrawSurface7"; devtype = "myIDirect3DDevice7"; }
-			if (iface->mName == "IDirect3D3") { surftype = "myIDirectDrawSurface4"; devtype = "myIDirect3DDevice3"; }
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				if (j == 1)
 				{
-					fprintf(f, ", (%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), surftype, iface->mMethod[i]->mParmName[j].c_str());
+					fprintf(f, ", (%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), ddsurfacewrapper, iface->mMethod[i]->mParmName[j].c_str());
 				}
 				else
 				{
@@ -830,56 +775,46 @@ void printCpp(int aIfaceNo)
 					   "    wrapstore(*c, ns);\n"
 			           "    *c = ns;\n"
 					   "    logf(\"Wrapped device.\\n\");\n"
-			           "  }\n"
-					   PROLOGUE
-			           "  return x;\n", devtype, devtype);
+			           "  }\n", d3ddevicewrapper, d3ddevicewrapper);
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "ProcessVertices")
 		{
-			char * buftype = "myIDirect3DVertexBuffer";
-			char * devtype = "myIDirect3DDevice3";
-			if (iface->mName == "IDirect3DVertexBuffer7") { buftype = "myIDirect3DVertexBuffer7"; devtype = "myIDirect3DDevice7"; }
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				if (j == 3)
 				{
-					fprintf(f, ", (%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), buftype, iface->mMethod[i]->mParmName[j].c_str());
+					fprintf(f, ", (%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), d3dvertexbufferwrapper, iface->mMethod[i]->mParmName[j].c_str());
 				}
 				else
 				if (j == 5)
 				{
-					fprintf(f, ", (%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), devtype, iface->mMethod[i]->mParmName[j].c_str());
+					fprintf(f, ", (%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), d3ddevicewrapper, iface->mMethod[i]->mParmName[j].c_str());
 				}
 				else
 				{
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 				}
 			fprintf(f, ");\n"
-			           "  logfc(\" -> return %%d\\n\", x);\n"
-					   PROLOGUE
-			           "  return x;\n");
+			           "  logfc(\" -> return %%d\\n\", x);\n");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "ProcessVerticesStrided")
 		{
-			char * devtype = "myIDirect3DDevice7";
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				if (j == 5)
 				{
-					fprintf(f, ", (%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), devtype, iface->mMethod[i]->mParmName[j].c_str());
+					fprintf(f, ", (%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), d3ddevicewrapper, iface->mMethod[i]->mParmName[j].c_str());
 				}
 				else
 				{
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 				}
 			fprintf(f, ");\n"
-			           "  logfc(\" -> return %%d\\n\", x);\n"
-					   PROLOGUE
-			           "  return x;\n");
+			           "  logfc(\" -> return %%d\\n\", x);\n");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "SetClipper")
@@ -892,9 +827,7 @@ void printCpp(int aIfaceNo)
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logfc(\" -> return %%d\\n\", x);\n"
-					   PROLOGUE
-					   "  return x;\n");
+			           "  logfc(\" -> return %%d\\n\", x);\n");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "SetPalette")
@@ -907,9 +840,7 @@ void printCpp(int aIfaceNo)
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logfc(\" -> return %%d\\n\", x);\n"
-					   PROLOGUE
-					   "  return x;\n");
+			           "  logfc(\" -> return %%d\\n\", x);\n");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "Initialize" && 
@@ -927,31 +858,24 @@ void printCpp(int aIfaceNo)
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logfc(\" -> return %%d\\n\", x);\n"
-					   PROLOGUE
-					   "  return x;\n");
+			           "  logfc(\" -> return %%d\\n\", x);\n");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "CreateVertexBuffer")
 		{
-			char * buftype = "myIDirect3DVertexBuffer";
-			if (iface->mName == "IDirect3D7") buftype = "myIDirect3DVertexBuffer7";
-
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
-			fprintf(f, ");\n"
-			           "  logfc(\" -> return %%d\\n\", x);\n"
+			printTemplate(f, ");\n"
+			           "  logfc(\" -> return %d\\n\", x);\n"
 			           "  if (x == DD_OK)\n"
 			           "  {\n"
-			           "    %s *ns = new %s(*b);\n"
+			           "    @0 *ns = new @0(*b);\n"
 					   "    wrapstore(*b, ns);\n"
 			           "    *b = ns;\n"
 					   "    logf(\"Wrapped vertex buffer.\\n\");\n"
-			           "  }\n"
-					   PROLOGUE
-			           "  return x;\n", buftype, buftype);
+			           "  }\n", d3dvertexbufferwrapper, 0);
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "CreateLight")
@@ -968,17 +892,11 @@ void printCpp(int aIfaceNo)
 					   "    wrapstore(*a, ns);\n"
 			           "    *a = ns;\n"
 					   "    logf(\"Wrapped light.\\n\");\n"
-			           "  }\n"
-					   PROLOGUE
-			           "  return x;\n");
+			           "  }\n");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "CreateMaterial")
 		{
-			char * mattype = "myIDirect3DMaterial";
-			if (iface->mName == "IDirect3D2") mattype = "myIDirect3DMaterial2";
-			if (iface->mName == "IDirect3D3") mattype = "myIDirect3DMaterial3";
-
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
@@ -991,17 +909,11 @@ void printCpp(int aIfaceNo)
 					   "    wrapstore(*a, ns);\n"
 			           "    *a = ns;\n"
 					   "    logf(\"Wrapped material.\\n\");\n"
-			           "  }\n"
-					   PROLOGUE
-			           "  return x;\n", mattype, mattype);
+			           "  }\n", d3dmaterialwrapper, d3dmaterialwrapper);
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "CreateViewport")
 		{
-			char * mattype = "myIDirect3DViewport";
-			if (iface->mName == "IDirect3D2") mattype = "myIDirect3DViewport2";
-			if (iface->mName == "IDirect3D3") mattype = "myIDirect3DViewport3";
-
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
@@ -1014,46 +926,33 @@ void printCpp(int aIfaceNo)
 					   "    wrapstore(*a, ns);\n"
 			           "    *a = ns;\n"
 					   "    logf(\"Wrapped viewport.\\n\");\n"
-			           "  }\n"
-					   PROLOGUE
-			           "  return x;\n", mattype, mattype);
+			           "  }\n", d3dviewportwrapper, d3dviewportwrapper);
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "SetRenderTarget")
 		{
-			char * surftype = "myIDirectDrawSurface";
-			if (iface->mName == "IDirect3DDevice3") surftype = "myIDirectDrawSurface4";
-			if (iface->mName == "IDirect3DDevice7") surftype = "myIDirectDrawSurface7";
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				if (j == 0)
-					fprintf(f, "(%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), surftype, iface->mMethod[i]->mParmName[j].c_str());
+					fprintf(f, "(%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), ddsurfacewrapper, iface->mMethod[i]->mParmName[j].c_str());
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logfc(\" -> return %%d\\n\", x);\n"
-					   PROLOGUE
-					   "  return x;\n");
+			           "  logfc(\" -> return %%d\\n\", x);\n");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "GetHandle")
 		{
-			char * surftype = "myIDirect3DDevice";
-			if (iface->mName == "IDirect3DMaterial2") surftype = "myIDirect3DDevice2";
-			if (iface->mName == "IDirect3DMaterial3") surftype = "myIDirect3DDevice3";
-			if (iface->mName == "IDirect3DTexture2") surftype = "myIDirect3DDevice2";
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				if (j == 0)
-					fprintf(f, "(%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), surftype, iface->mMethod[i]->mParmName[j].c_str());
+					fprintf(f, "(%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), d3ddevicewrapper, iface->mMethod[i]->mParmName[j].c_str());
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logfc(\" -> return %%d\\n\", x);\n"
-					   PROLOGUE
-					   "  return x;\n");
+			           "  logfc(\" -> return %%d\\n\", x);\n");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "Preload")
@@ -1066,70 +965,51 @@ void printCpp(int aIfaceNo)
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logfc(\" -> return %%d\\n\", x);\n"
-					   PROLOGUE
-					   "  return x;\n");
+			           "  logfc(\" -> return %%d\\n\", x);\n");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "AddViewport" ||
 			iface->mMethod[i]->mFuncName == "DeleteViewport")
 		{
-			char *wraptype = "myIDirect3DViewport";
-			if (iface->mName == "IDirect3DDevice2") wraptype = "myIDirect3DViewport2";
-			if (iface->mName == "IDirect3DDevice3") wraptype = "myIDirect3DViewport3";
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				if (j == 0)
-					fprintf(f, "(%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), wraptype, iface->mMethod[i]->mParmName[j].c_str());
+					fprintf(f, "(%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), d3dviewportwrapper, iface->mMethod[i]->mParmName[j].c_str());
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logfc(\" -> return %%d\\n\", x);\n"
-					   PROLOGUE
-					   "  return x;\n");
+			           "  logfc(\" -> return %%d\\n\", x);\n");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "DrawPrimitiveVB" || iface->mMethod[i]->mFuncName == "DrawIndexedPrimitiveVB")
 		{
-			char * vbtype = "myIDirect3DVertexBuffer";
-			if (iface->mName == "IDirect3DDevice7") vbtype = "myIDirect3DVertexBuffer7";
-
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				if (j == 1)
-					fprintf(f, ", (%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), vbtype, iface->mMethod[i]->mParmName[j].c_str());
+					fprintf(f, ", (%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), d3dvertexbufferwrapper, iface->mMethod[i]->mParmName[j].c_str());
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logfc(\" -> return %%d\\n\", x);\n"
-					   PROLOGUE
-					   "  return x;\n");
+			           "  logfc(\" -> return %%d\\n\", x);\n");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "SetCurrentViewport")
 		{
-			char * vbtype = "myIDirect3DViewport2";
-			if (iface->mName == "IDirect3DDevice3") vbtype = "myIDirect3DViewport3";
-
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 				if (j == 0)
-					fprintf(f, "(%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), vbtype, iface->mMethod[i]->mParmName[j].c_str());
+					fprintf(f, "(%s)?((%s *)%s)->mOriginal:0", iface->mMethod[i]->mParmName[j].c_str(), d3dviewportwrapper, iface->mMethod[i]->mParmName[j].c_str());
 				else
 					fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			fprintf(f, ");\n"
-			           "  logfc(\" -> return %%d\\n\", x);\n"
-					   PROLOGUE
-					   "  return x;\n");
+			           "  logfc(\" -> return %%d\\n\", x);\n");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "GetPalette")
 		{
-			char * datatype = "LPDIRECTDRAWPALETTE";
-			char * wrapname = "myIDirectDrawPalette";
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
@@ -1143,19 +1023,15 @@ void printCpp(int aIfaceNo)
 					   "    n = (@0)new @2(*@1);\n"
 					   "    logf(\"Wrapped palette\\n\");\n"
 					   "  }\n"
-					   "  *@1 = n;\n"
-					   PROLOGUE
-					   "  return x;\n", 
-					   /* 0 */ datatype,
+					   "  *@1 = n;\n",
+					   /* 0 */ ddpalettetype,
 					   /* 1 */ iface->mMethod[i]->mParmName[0].c_str(), 
-					   /* 2 */ wrapname,					   
+					   /* 2 */ ddpalettewrapper,					   
 					   0);
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "GetClipper")
 		{
-			char * datatype = "LPDIRECTDRAWCLIPPER";
-			char * wrapname = "myIDirectDrawClipper";
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
@@ -1169,23 +1045,16 @@ void printCpp(int aIfaceNo)
 					   "    n = (@0)new @2(*@1);\n"
 					   "    logf(\"Wrapped clipper\\n\");\n"
 					   "  }\n"
-					   "  *@1 = n;\n"
-					   PROLOGUE
-					   "  return x;\n", 
-					   /* 0 */ datatype,
+					   "  *@1 = n;\n", 
+					   /* 0 */ ddclippertype,
 					   /* 1 */ iface->mMethod[i]->mParmName[0].c_str(), 
-					   /* 2 */ wrapname,					   
+					   /* 2 */ ddclipperwrapper,					   
 					   0);
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "GetDDInterface")
 		{
 			char * datatype = "LPVOID";
-			char * datatype2 = "IDirectDraw2 *";
-			char * wrapname = "myIDirectDraw2";
-			if (iface->mName == "IDirectDrawSurface3") { wrapname = "myIDirectDraw3"; datatype2 = "IDirectDraw3 *"; }
-			if (iface->mName == "IDirectDrawSurface4") { wrapname = "myIDirectDraw4"; datatype2 = "IDirectDraw4 *"; }
-			if (iface->mName == "IDirectDrawSurface7") { wrapname = "myIDirectDraw7"; datatype2 = "IDirectDraw7 *"; }
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
@@ -1199,23 +1068,16 @@ void printCpp(int aIfaceNo)
 					   "    n = (@0)new @2((@3)*@1);\n"
 					   "    logf(\"Wrapped ddraw\\n\");\n"
 					   "  }\n"
-					   "  *@1 = n;\n"
-					   PROLOGUE
-					   "  return x;\n", 
+					   "  *@1 = n;\n", 
 					   /* 0 */ datatype,
 					   /* 1 */ iface->mMethod[i]->mParmName[0].c_str(), 
-					   /* 2 */ wrapname,		
-					   /* 3 */ datatype2,
+					   /* 2 */ ddwrapper,
+					   /* 3 */ ddtype,
 					   0);
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "GetAttachedSurface")
 		{		
-			char *wrapname ="myIDirectDrawSurface";
-			if (iface->mName == "IDirectDrawSurface2") wrapname = "myIDirectDrawSurface2";
-			if (iface->mName == "IDirectDrawSurface3") wrapname = "myIDirectDrawSurface3";
-			if (iface->mName == "IDirectDrawSurface4") wrapname = "myIDirectDrawSurface4";
-			if (iface->mName == "IDirectDrawSurface7") wrapname = "myIDirectDrawSurface7";
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
@@ -1230,22 +1092,15 @@ void printCpp(int aIfaceNo)
 					   "    n = (@0 *)new @2(*@1);\n"
 					   "    logf(\"Wrapped attached surface\\n\");\n"
 					   "  }\n"
-					   "  *@1 = n;\n"
-					   PROLOGUE
-					   "  return x;\n", 
+					   "  *@1 = n;\n", 
 					   /* 0 */ iface->mName.c_str(),
 					   /* 1 */ iface->mMethod[i]->mParmName[1].c_str(), 
-					   /* 2 */ wrapname,					   
+					   /* 2 */ ddsurfacewrapper,					   
 					   0);
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "GetDirect3D")
 		{
-			char * datatype = "LPDIRECT3D";
-			char * wrapname = "myIDirect3D";
-			if (iface->mName == "IDirect3DDevice2") { datatype = "LPDIRECT3D2"; wrapname = "myIDirect3D2"; }
-			if (iface->mName == "IDirect3DDevice3") { datatype = "LPDIRECT3D3"; wrapname = "myIDirect3D3"; }
-			if (iface->mName == "IDirect3DDevice7") { datatype = "LPDIRECT3D7"; wrapname = "myIDirect3D7"; }
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
@@ -1259,21 +1114,15 @@ void printCpp(int aIfaceNo)
 					   "    n = (@0)new @2(*@1);\n"
 					   "    logf(\"Wrapped ddraw\\n\");\n"
 					   "  }\n"
-					   "  *@1 = n;\n"
-					   PROLOGUE
-					   "  return x;\n", 
-					   /* 0 */ datatype,
+					   "  *@1 = n;\n", 
+					   /* 0 */ d3dtype,
 					   /* 1 */ iface->mMethod[i]->mParmName[0].c_str(), 
-					   /* 2 */ wrapname,					   
+					   /* 2 */ d3dwrapper,					   
 					   0);
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "GetRenderTarget")
 		{
-			char * datatype = "LPDIRECTDRAWSURFACE";
-			char * wrapname = "myIDirectDrawSurface";
-			if (iface->mName == "IDirect3DDevice3") { datatype = "LPDIRECTDRAWSURFACE4"; wrapname="myIDirectDrawSurface4"; }
-			if (iface->mName == "IDirect3DDevice7") { datatype = "LPDIRECTDRAWSURFACE7"; wrapname="myIDirectDrawSurface7"; }
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
@@ -1287,20 +1136,15 @@ void printCpp(int aIfaceNo)
 					   "    n = (@0)new @2(*@1);\n"
 					   "    logf(\"Wrapped surface\\n\");\n"
 					   "  }\n"
-					   "  *@1 = n;\n"
-					   PROLOGUE
-					   "  return x;\n", 
-					   /* 0 */ datatype,
+					   "  *@1 = n;\n", 
+					   /* 0 */ ddsurfacetype,
 					   /* 1 */ iface->mMethod[i]->mParmName[0].c_str(), 
-					   /* 2 */ wrapname,					   
+					   /* 2 */ ddsurfacewrapper,					   
 					   0);
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "GetTexture")
 		{
-			char * datatype = "LPDIRECT3DTEXTURE2";
-			char * wrapname = "myIDirect3DTexture2";
-			if (iface->mName == "IDirect3DDevice7") { datatype = "LPDIRECTDRAWSURFACE7"; wrapname = "myIDirectDrawSurface7"; }
 			fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 			int j;
 			for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
@@ -1314,12 +1158,10 @@ void printCpp(int aIfaceNo)
 					   "    n = (@0)new @2(*@1);\n"
 					   "    logf(\"Wrapped texture\\n\");\n"
 					   "  }\n"
-					   "  *@1 = n;\n"
-					   PROLOGUE
-					   "  return x;\n", 
-					   /* 0 */ datatype,
+					   "  *@1 = n;\n", 
+					   /* 0 */ d3dtexturetype,
 					   /* 1 */ iface->mMethod[i]->mParmName[1].c_str(), 
-					   /* 2 */ wrapname,					   
+					   /* 2 */ d3dtexturewrapper,					   
 					   0);
 		}
 		else
@@ -1343,12 +1185,13 @@ void printCpp(int aIfaceNo)
 			else
 				fprintf(f, "  logf(\"\\n\", x);\n");
 
-			fprintf(f, PROLOGUE
-				       "  return x;\n");
 		}
 		
-		fprintf(f, "}\n"
-			   "\n");
+		fprintf(f, "  poptab();\n" 
+				   "  LeaveCriticalSection(&gCS);\n"
+				   "  return x;\n"
+		           "}\n"
+			       "\n");
 	}
 	fclose(f);
 }
