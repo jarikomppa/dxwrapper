@@ -410,6 +410,45 @@ void printH(int aIfaceNo)
 	fclose(f);
 }
 
+void printIfacePtrHandler(FILE * f, const char * aDataType, const char * aVariable, const char * aWrapper, const char * aPtrCaster = 0)
+{
+	if (aPtrCaster)
+	{
+		printTemplate(f,
+					"  @0 n = (@0)wrapfetch(*@1);\n"
+					"  if (n == NULL && *@1 != NULL)\n"
+					"  {\n"
+					"    n = (@0)new @2((@3)*@1);\n"
+					"    wrapstore(n, *@1);\n"
+					"    logf(\"Wrapped.\\n\");\n"
+					"  }\n"
+					"  *@1 = n;\n", 
+					/* 0 */ aDataType,
+					/* 1 */ aVariable,
+					/* 2 */ aWrapper,
+					/* 3 */ aPtrCaster,
+					0);
+	}
+	else
+	{
+		printTemplate(f,
+					"  @0 n = (@0)wrapfetch(*@1);\n"
+					"  if (n == NULL && *@1 != NULL)\n"
+					"  {\n"
+					"    n = (@0)new @2(*@1);\n"
+					"    wrapstore(n, *@1);\n"
+					"    logf(\"Wrapped.\\n\");\n"
+					"  }\n"
+					"  *@1 = n;\n", 
+					/* 0 */ aDataType,
+					/* 1 */ aVariable,
+					/* 2 */ aWrapper,
+					0);
+	}
+}
+
+
+
 void printCpp(int aIfaceNo)
 {
 	Iface * iface = gIface[aIfaceNo];
@@ -475,24 +514,24 @@ void printCpp(int aIfaceNo)
 		char * d3dtype = "$Undefined$"; 
 		char * d3dwrapper = "$Undefined$"; 
 		char * ddsurfacetype = "$Undefined$";
+		char * ddsurfacewrapper = "$Undefined$"; 
 		char * ddtype = "$Undefined$"; 
 		char * ddwrapper = "$Undefined$"; 
+		char * d3ddevicetype = "$Undefined$"; 
 		char * d3ddevicewrapper = "$Undefined$"; 
+		char * d3dmaterialtype = "$Undefined$"; 
 		char * d3dmaterialwrapper = "$Undefined$"; 
-		char * ddsurfacewrapper = "$Undefined$"; 
 		char * d3dtexturetype = "$Undefined$"; 
 		char * d3dtexturewrapper = "$Undefined$"; 
+		char * d3dvertexbuffertype = "$Undefined$";
 		char * d3dvertexbufferwrapper = "$Undefined$";
+		char * d3dviewporttype = "$Undefined$";
 		char * d3dviewportwrapper = "$Undefined$";
 
-		char * ddclippertype = "LPDIRECTDRAWCLIPPER";
-		char * ddclipperwrapper = "myIDirectDrawClipper";
-		char * ddpalettetype = "LPDIRECTDRAWPALETTE";
-		char * ddpalettewrapper = "myIDirectDrawPalette";
-		if (iface->mName == "IDirect3D") {  d3dmaterialwrapper = "myIDirect3DMaterial";  d3dviewportwrapper = "myIDirect3DViewport";  d3dvertexbufferwrapper = "myIDirect3DVertexBuffer"; }
-		if (iface->mName == "IDirect3D2") { d3dmaterialwrapper = "myIDirect3DMaterial2"; d3dviewportwrapper = "myIDirect3DViewport2"; d3dvertexbufferwrapper = "myIDirect3DVertexBuffer";  ddsurfacewrapper = "myIDirectDrawSurface";  d3ddevicewrapper = "myIDirect3DDevice2"; }
-		if (iface->mName == "IDirect3D3") { d3dmaterialwrapper = "myIDirect3DMaterial3"; d3dviewportwrapper = "myIDirect3DViewport3"; d3dvertexbufferwrapper = "myIDirect3DVertexBuffer";  ddsurfacewrapper = "myIDirectDrawSurface4"; d3ddevicewrapper = "myIDirect3DDevice3"; }
-		if (iface->mName == "IDirect3D7") {                                                                                           d3dvertexbufferwrapper = "myIDirect3DVertexBuffer7"; ddsurfacewrapper = "myIDirectDrawSurface7"; d3ddevicewrapper = "myIDirect3DDevice7"; }
+		if (iface->mName == "IDirect3D") {  d3dmaterialwrapper = "myIDirect3DMaterial";  d3dmaterialtype = "myIDirect3DMaterial *";  d3dviewportwrapper = "myIDirect3DViewport";  d3dviewporttype = "myIDirect3DViewport *";  d3dvertexbufferwrapper = "myIDirect3DVertexBuffer";  d3dvertexbuffertype = "myIDirect3DVertexBuffer *"; }
+		if (iface->mName == "IDirect3D2") { d3dmaterialwrapper = "myIDirect3DMaterial2"; d3dmaterialtype = "myIDirect3DMaterial2 *"; d3dviewportwrapper = "myIDirect3DViewport2"; d3dviewporttype = "myIDirect3DViewport2 *"; d3dvertexbufferwrapper = "myIDirect3DVertexBuffer";  d3dvertexbuffertype = "myIDirect3DVertexBuffer *";  ddsurfacewrapper = "myIDirectDrawSurface";  d3ddevicewrapper = "myIDirect3DDevice2"; d3ddevicetype = "myIDirect3DDevice2 *"; }
+		if (iface->mName == "IDirect3D3") { d3dmaterialwrapper = "myIDirect3DMaterial3"; d3dmaterialtype = "myIDirect3DMaterial3 *"; d3dviewportwrapper = "myIDirect3DViewport3"; d3dviewporttype = "myIDirect3DViewport3 *"; d3dvertexbufferwrapper = "myIDirect3DVertexBuffer";  d3dvertexbuffertype = "myIDirect3DVertexBuffer *";  ddsurfacewrapper = "myIDirectDrawSurface4"; d3ddevicewrapper = "myIDirect3DDevice3"; d3ddevicetype = "myIDirect3DDevice3 *"; }
+		if (iface->mName == "IDirect3D7") { d3dvertexbufferwrapper = "myIDirect3DVertexBuffer7"; d3dvertexbuffertype = "myIDirect3DVertexBuffer7 *"; ddsurfacewrapper = "myIDirectDrawSurface7"; d3ddevicewrapper = "myIDirect3DDevice7"; d3ddevicetype = "myIDirect3DDevice7 *"; }
 		if (iface->mName == "IDirect3DDevice") {  ddsurfacewrapper = "myIDirectDrawSurface";  d3dtexturewrapper = "myIDirect3DTexture";    d3dviewportwrapper = "myIDirect3DViewport";          d3dtype = "LPDIRECT3D";  d3dwrapper = "myIDirect3D";   ddsurfacetype = "LPDIRECTDRAWSURFACE";  d3dviewportwrapper = "myIDirect3DViewport"; }
 		if (iface->mName == "IDirect3DDevice2") { ddsurfacewrapper = "myIDirectDrawSurface";  d3dtexturewrapper = "myIDirect3DTexture";    d3dviewportwrapper = "myIDirect3DViewport2";         d3dtype = "LPDIRECT3D2"; d3dwrapper = "myIDirect3D2";  ddsurfacetype = "LPDIRECTDRAWSURFACE";  d3dviewportwrapper = "myIDirect3DViewport3"; }
 		if (iface->mName == "IDirect3DDevice3") { ddsurfacewrapper = "myIDirectDrawSurface4"; d3dtexturewrapper = "myIDirect3DTexture2";   d3dvertexbufferwrapper = "myIDirect3DVertexBuffer";  d3dtype = "LPDIRECT3D3"; d3dwrapper = "myIDirect3D3";  ddsurfacetype = "LPDIRECTDRAWSURFACE4"; d3dviewportwrapper = "myIDirect3DViewport3"; d3dtexturetype = "LPDIRECT3DTEXTURE2";   }
@@ -509,11 +548,11 @@ void printCpp(int aIfaceNo)
 		if (iface->mName == "IDirectDraw3") { ddsurfacewrapper = "myIDirectDrawSurface";  ddsurfacetype = "IDirectDrawSurface *"; }
 		if (iface->mName == "IDirectDraw4") { ddsurfacewrapper = "myIDirectDrawSurface4"; ddsurfacetype = "IDirectDrawSurface4 *"; }
 		if (iface->mName == "IDirectDraw7") { ddsurfacewrapper = "myIDirectDrawSurface7"; ddsurfacetype = "IDirectDrawSurface7 *"; }
-		if (iface->mName == "IDirectDrawSurface")  { ddsurfacewrapper = "myIDirectDrawSurface"; }
-		if (iface->mName == "IDirectDrawSurface2") { ddsurfacewrapper = "myIDirectDrawSurface2"; ddwrapper = "myIDirectDraw2"; ddtype = "IDirectDraw2 *";}
-		if (iface->mName == "IDirectDrawSurface3") { ddsurfacewrapper = "myIDirectDrawSurface3"; ddwrapper = "myIDirectDraw3"; ddtype = "IDirectDraw3 *"; }
-		if (iface->mName == "IDirectDrawSurface4") { ddsurfacewrapper = "myIDirectDrawSurface4"; ddwrapper = "myIDirectDraw4"; ddtype = "IDirectDraw4 *"; }
-		if (iface->mName == "IDirectDrawSurface7") { ddsurfacewrapper = "myIDirectDrawSurface7"; ddwrapper = "myIDirectDraw7"; ddtype = "IDirectDraw7 *"; }
+		if (iface->mName == "IDirectDrawSurface")  { ddsurfacewrapper = "myIDirectDrawSurface";  ddsurfacetype = "myIDirectDrawSurface *"; }
+		if (iface->mName == "IDirectDrawSurface2") { ddsurfacewrapper = "myIDirectDrawSurface2"; ddsurfacetype = "myIDirectDrawSurface2 *"; ddwrapper = "myIDirectDraw2"; ddtype = "IDirectDraw2 *";}
+		if (iface->mName == "IDirectDrawSurface3") { ddsurfacewrapper = "myIDirectDrawSurface3"; ddsurfacetype = "myIDirectDrawSurface3 *"; ddwrapper = "myIDirectDraw3"; ddtype = "IDirectDraw3 *"; }
+		if (iface->mName == "IDirectDrawSurface4") { ddsurfacewrapper = "myIDirectDrawSurface4"; ddsurfacetype = "myIDirectDrawSurface4 *"; ddwrapper = "myIDirectDraw4"; ddtype = "IDirectDraw4 *"; }
+		if (iface->mName == "IDirectDrawSurface7") { ddsurfacewrapper = "myIDirectDrawSurface7"; ddsurfacetype = "myIDirectDrawSurface7 *"; ddwrapper = "myIDirectDraw7"; ddtype = "IDirectDraw7 *"; }
 
 		fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 		for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
@@ -525,7 +564,11 @@ void printCpp(int aIfaceNo)
 				if (gIface[k]->mLPName == iface->mMethod[i]->mParmType[j])
 				{
 					found = 1;
-					printTemplate(f, "@0(@1)?((@2 *)@1)->mOriginal:0", j?", ":"", iface->mMethod[i]->mParmName[j].c_str(), gIface[k]->mWrapperName.c_str(), 0);
+					printTemplate(f, "@0(@1)?((@2 *)@1)->mOriginal:0", 
+						/* 0 */ j ? ", " : "", 
+						/* 1 */ iface->mMethod[i]->mParmName[j].c_str(), 
+						/* 2 */ gIface[k]->mWrapperName.c_str(), 
+						        0);
 				}
 			}
 			if (!found)
@@ -553,241 +596,76 @@ void printCpp(int aIfaceNo)
 		else
 		if (iface->mMethod[i]->mFuncName == "CreateClipper")
 		{
-			fprintf(f, "  if (x == DD_OK)\n"
-			           "  {\n"
-			           "    myIDirectDrawClipper *nc = new myIDirectDrawClipper(*b);\n"
-					   "    wrapstore(*b, nc);\n"
-			           "    *b = nc;\n"
-					   "    logf(\"Wrapped clipper.\\n\");\n"
-			           "  }\n");
+			printIfacePtrHandler(f, "myIDirectDrawClipper *", "b", "myIDirectDrawClipper");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "CreatePalette")
 		{
-			fprintf(f, "  if (x == DD_OK)\n"
-			           "  {\n"
-			           "    myIDirectDrawPalette *np = new myIDirectDrawPalette(*c);\n"
-					   "    wrapstore(*c, np);\n"
-			           "    *c = np;\n"
-					   "    logf(\"Wrapped palette.\\n\");\n"
-			           "  }\n");
+			printIfacePtrHandler(f, "myIDirectDrawPalette *", "c", "myIDirectDrawPalette");
 		}
 		else
-		if (iface->mMethod[i]->mFuncName == "CreateSurface")
-		{
-			printTemplate(f, "  if (x == DD_OK)\n"
-			           "  {\n"
-			           "    @0 *ns = new @0(*b);\n"
-					   "    wrapstore(*b, ns);\n"
-			           "    *b = ns;\n"
-					   "    logf(\"Wrapped surface.\\n\");\n"
-			           "  }\n", ddsurfacewrapper, 0);
+		if (iface->mMethod[i]->mFuncName == "CreateSurface" ||
+		    iface->mMethod[i]->mFuncName == "DuplicateSurface" || 
+			iface->mMethod[i]->mFuncName == "GetSurfaceFromDC" ||
+		    iface->mMethod[i]->mFuncName == "GetAttachedSurface")
+		{		
+			printIfacePtrHandler(f, ddsurfacetype, iface->mMethod[i]->mParmName[1].c_str(), ddsurfacewrapper);
 		}
 		else
-		if (iface->mMethod[i]->mFuncName == "DuplicateSurface")
+		if (iface->mMethod[i]->mFuncName == "GetGDISurface" ||
+		    iface->mMethod[i]->mFuncName == "GetRenderTarget")
 		{
-			fprintf(f, "  if (x == DD_OK)\n"
-			           "  {\n"
-			           "    %s *ns = new %s(*b);\n"
-					   "    wrapstore(*b, ns);\n"
-			           "    *b = ns;\n"
-					   "    logf(\"Wrapped surface.\\n\");\n"
-			           "  }\n", ddsurfacewrapper, ddsurfacewrapper);
-		}
-		else
-		if (iface->mMethod[i]->mFuncName == "GetSurfaceFromDC")
-		{
-			fprintf(f, "  if (x == DD_OK)\n"
-			           "  {\n"
-			           "    %s *ns = new %s(*b);\n"
-					   "    wrapstore(*b, ns);\n"
-			           "    *b = ns;\n"
-					   "    logf(\"Wrapped surface.\\n\");\n"
-			           "  }\n", ddsurfacewrapper, ddsurfacewrapper);
+			printIfacePtrHandler(f, ddsurfacetype, iface->mMethod[i]->mParmName[0].c_str(), ddsurfacewrapper);
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "CreateDevice")
 		{
-			fprintf(f, "  if (x == DD_OK)\n"
-			           "  {\n"
-			           "    %s *ns = new %s(*c);\n"
-					   "    wrapstore(*c, ns);\n"
-			           "    *c = ns;\n"
-					   "    logf(\"Wrapped device.\\n\");\n"
-			           "  }\n", d3ddevicewrapper, d3ddevicewrapper);
+			printIfacePtrHandler(f, d3ddevicetype, "c", d3ddevicewrapper);
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "CreateVertexBuffer")
 		{
-			printTemplate(f, "  if (x == DD_OK)\n"
-			           "  {\n"
-			           "    @0 *ns = new @0(*b);\n"
-					   "    wrapstore(*b, ns);\n"
-			           "    *b = ns;\n"
-					   "    logf(\"Wrapped vertex buffer.\\n\");\n"
-			           "  }\n", d3dvertexbufferwrapper, 0);
+			printIfacePtrHandler(f, d3dvertexbuffertype, "b", d3dvertexbufferwrapper);
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "CreateLight")
 		{
-			fprintf(f, "  if (x == DD_OK)\n"
-			           "  {\n"
-			           "    myIDirect3DLight *ns = new myIDirect3DLight(*a);\n"
-					   "    wrapstore(*a, ns);\n"
-			           "    *a = ns;\n"
-					   "    logf(\"Wrapped light.\\n\");\n"
-			           "  }\n");
+			printIfacePtrHandler(f, "myIDirect3DLight *", "a", "myIDirect3DLight");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "CreateMaterial")
 		{
-			fprintf(f, "  if (x == DD_OK)\n"
-			           "  {\n"
-			           "    %s *ns = new %s(*a);\n"
-					   "    wrapstore(*a, ns);\n"
-			           "    *a = ns;\n"
-					   "    logf(\"Wrapped material.\\n\");\n"
-			           "  }\n", d3dmaterialwrapper, d3dmaterialwrapper);
+			printIfacePtrHandler(f, d3dmaterialtype, "a", d3dmaterialwrapper);
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "CreateViewport")
 		{
-			fprintf(f, "  if (x == DD_OK)\n"
-			           "  {\n"
-			           "    %s *ns = new %s(*a);\n"
-					   "    wrapstore(*a, ns);\n"
-			           "    *a = ns;\n"
-					   "    logf(\"Wrapped viewport.\\n\");\n"
-			           "  }\n", d3dviewportwrapper, d3dviewportwrapper);
+			printIfacePtrHandler(f, d3dviewporttype, "a", d3dviewportwrapper);
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "GetPalette")
 		{
-			printTemplate(f,
-				       "  @0 n = (@0)wrapfetch(*@1);\n"
-					   "  if (n == NULL && *@1 != NULL)\n"
-					   "  {\n"
-					   "    n = (@0)new @2(*@1);\n"
-					   "    logf(\"Wrapped palette\\n\");\n"
-					   "  }\n"
-					   "  *@1 = n;\n",
-					   /* 0 */ ddpalettetype,
-					   /* 1 */ iface->mMethod[i]->mParmName[0].c_str(), 
-					   /* 2 */ ddpalettewrapper,					   
-					   0);
+			printIfacePtrHandler(f, "myIDirectDrawPalette *", iface->mMethod[i]->mParmName[0].c_str(), "myIDirectDrawPalette");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "GetClipper")
 		{
-			printTemplate(f,
-				       "  @0 n = (@0)wrapfetch(*@1);\n"
-					   "  if (n == NULL)\n"
-					   "  {\n"
-					   "    n = (@0)new @2(*@1);\n"
-					   "    logf(\"Wrapped clipper\\n\");\n"
-					   "  }\n"
-					   "  *@1 = n;\n", 
-					   /* 0 */ ddclippertype,
-					   /* 1 */ iface->mMethod[i]->mParmName[0].c_str(), 
-					   /* 2 */ ddclipperwrapper,					   
-					   0);
+			printIfacePtrHandler(f, "myIDirectDrawClipper *", iface->mMethod[i]->mParmName[0].c_str(), "myIDirectDrawClipper");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "GetDDInterface")
 		{
-			printTemplate(f,
-				       "  @0 n = (@0)wrapfetch(*@1);\n"
-					   "  if (n == NULL && *@1 != NULL)\n"
-					   "  {\n"
-					   "    n = (@0)new @2((@3)*@1);\n"
-					   "    logf(\"Wrapped ddraw\\n\");\n"
-					   "  }\n"
-					   "  *@1 = n;\n", 
-					   /* 0 */ "LPVOID",
-					   /* 1 */ iface->mMethod[i]->mParmName[0].c_str(), 
-					   /* 2 */ ddwrapper,
-					   /* 3 */ ddtype,
-					   0);
-		}
-		else
-		if (iface->mMethod[i]->mFuncName == "GetAttachedSurface")
-		{		
-			printTemplate(f,
-				       "  @0* n = (@0 *)wrapfetch(*@1);\n"
-					   "  if (n == NULL && *@1 != NULL)\n"
-					   "  {\n"
-					   "    n = (@0 *)new @2(*@1);\n"
-					   "    logf(\"Wrapped attached surface\\n\");\n"
-					   "  }\n"
-					   "  *@1 = n;\n", 
-					   /* 0 */ iface->mName.c_str(),
-					   /* 1 */ iface->mMethod[i]->mParmName[1].c_str(), 
-					   /* 2 */ ddsurfacewrapper,					   
-					   0);
-		}
-		else
-		if (iface->mMethod[i]->mFuncName == "GetGDISurface")
-		{		
-			printTemplate(f,
-				       "  @0 n = (@0)wrapfetch(*@1);\n"
-					   "  if (n == NULL && *@1 != NULL)\n"
-					   "  {\n"
-					   "    n = (@0)new @2(*@1);\n"
-					   "    logf(\"Wrapped attached surface\\n\");\n"
-					   "  }\n"
-					   "  *@1 = n;\n", 
-					   /* 0 */ ddsurfacetype,
-					   /* 1 */ iface->mMethod[i]->mParmName[0].c_str(), 
-					   /* 2 */ ddsurfacewrapper,					   
-					   0);
+			printIfacePtrHandler(f, "LPVOID", iface->mMethod[i]->mParmName[0].c_str(), ddwrapper, ddtype);
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "GetDirect3D")
 		{
-			printTemplate(f,
-				       "  @0 n = (@0)wrapfetch(*@1);\n"
-					   "  if (n == NULL && *@1 != NULL)\n"
-					   "  {\n"
-					   "    n = (@0)new @2(*@1);\n"
-					   "    logf(\"Wrapped ddraw\\n\");\n"
-					   "  }\n"
-					   "  *@1 = n;\n", 
-					   /* 0 */ d3dtype,
-					   /* 1 */ iface->mMethod[i]->mParmName[0].c_str(), 
-					   /* 2 */ d3dwrapper,					   
-					   0);
-		}
-		else
-		if (iface->mMethod[i]->mFuncName == "GetRenderTarget")
-		{
-			printTemplate(f,
-				       "  @0 n = (@0)wrapfetch(*@1);\n"
-					   "  if (n == NULL && *@1 != NULL)\n"
-					   "  {\n"
-					   "    n = (@0)new @2(*@1);\n"
-					   "    logf(\"Wrapped surface\\n\");\n"
-					   "  }\n"
-					   "  *@1 = n;\n", 
-					   /* 0 */ ddsurfacetype,
-					   /* 1 */ iface->mMethod[i]->mParmName[0].c_str(), 
-					   /* 2 */ ddsurfacewrapper,					   
-					   0);
+			printIfacePtrHandler(f, d3dtype, iface->mMethod[i]->mParmName[0].c_str(), d3dwrapper);
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "GetTexture")
 		{
-			printTemplate(f,
-				       "  @0 n = (@0)wrapfetch(*@1);\n"
-					   "  if (n == NULL && *@1 != NULL)\n"
-					   "  {\n"
-					   "    n = (@0)new @2(*@1);\n"
-					   "    logf(\"Wrapped texture\\n\");\n"
-					   "  }\n"
-					   "  *@1 = n;\n", 
-					   /* 0 */ d3dtexturetype,
-					   /* 1 */ iface->mMethod[i]->mParmName[1].c_str(), 
-					   /* 2 */ d3dtexturewrapper,					   
-					   0);
+			printIfacePtrHandler(f, d3dtexturetype, iface->mMethod[i]->mParmName[1].c_str(), d3dtexturewrapper);
 		}
 		else
 		if (0)
