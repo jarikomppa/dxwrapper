@@ -7,6 +7,9 @@
 
 #define VERSION "ddwrappergen 1.130524 (c)2013 Jari Komppa http://iki.fi/sol/"
 
+//#define DISABLE_LOGGING
+//#define DISABLE_CRITICAL_SECTION
+
 using namespace std;
 
 struct Method
@@ -420,7 +423,9 @@ void printIfacePtrHandler(FILE * f, const char * aDataType, const char * aVariab
 					"  {\n"
 					"    n = (@0)new @2((@3)*@1);\n"
 					"    wrapstore(n, *@1);\n"
+#ifndef DISABLE_LOGGING
 					"    logf(\"Wrapped.\\n\");\n"
+#endif
 					"  }\n"
 					"  *@1 = n;\n", 
 					/* 0 */ aDataType,
@@ -437,7 +442,9 @@ void printIfacePtrHandler(FILE * f, const char * aDataType, const char * aVariab
 					"  {\n"
 					"    n = (@0)new @2(*@1);\n"
 					"    wrapstore(n, *@1);\n"
+#ifndef DISABLE_LOGGING
 					"    logf(\"Wrapped.\\n\");\n"
+#endif
 					"  }\n"
 					"  *@1 = n;\n", 
 					/* 0 */ aDataType,
@@ -464,14 +471,18 @@ void printCpp(int aIfaceNo)
 
 	fprintf(f, "my%s::my%s(%s * aOriginal)\n", iface->mName.c_str(), iface->mName.c_str(), iface->mName.c_str());
 	fprintf(f, "{\n");
+#ifndef DISABLE_LOGGING
 	fprintf(f, "  logf(\"my%s ctor\\n\");\n", iface->mName.c_str());
+#endif
 	fprintf(f, "  mOriginal = aOriginal;\n"
 		   "}\n"
 		   "\n");
 
 	fprintf(f, "my%s::~my%s()\n", iface->mName.c_str(), iface->mName.c_str());
 	fprintf(f, "{\n");
+#ifndef DISABLE_LOGGING
 	fprintf(f, "  logf(\"my%s dtor\\n\");\n", iface->mName.c_str());
+#endif
 	fprintf(f, "}\n"
 		   "\n");
 
@@ -485,9 +496,12 @@ void printCpp(int aIfaceNo)
 		fprintf(f, ")\n"
 			"{\n");
 
+#ifndef DISABLE_CRITICAL_SECTION
 		fprintf(f, "  EnterCriticalSection(&gCS);\n");
+#endif
 
-		fprintf(f, "  logf(\"my%s::%s(", iface->mName.c_str(), iface->mMethod[i]->mFuncName.c_str());		
+#ifndef DISABLE_LOGGING
+		fprintf(f, "  logf(\"my%s::%s(", iface->mName.c_str(), iface->mMethod[i]->mFuncName.c_str());
 		for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 		{
 			fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmType[j].c_str());
@@ -509,6 +523,7 @@ void printCpp(int aIfaceNo)
 			 fprintf(f, ", %s", iface->mMethod[i]->mParmName[j].c_str());
 		}
 		fprintf(f, ");\n");
+#endif
 
 		char * d3dtype = "$Undefined$"; 
 		char * d3dwrapper = "$Undefined$"; 
@@ -576,8 +591,11 @@ void printCpp(int aIfaceNo)
 			}
 		}
 		fprintf(f, ");\n"
-			        "  logfc(\" -> return %%d\\n\", x);\n"					
-		            "  pushtab();\n");
+#ifndef DISABLE_LOGGING
+					"  logfc(\" -> return %%d\\n\", x);\n"
+		            "  pushtab();\n"
+#endif
+					);
 
 		if (iface->mMethod[i]->mFuncName == "Release")
 		{
@@ -699,8 +717,9 @@ void printCpp(int aIfaceNo)
 		if (0)
 		{
 			// If there are some specifically non-implemented methods
-
+#ifndef DISABLE_LOGGING
 			fprintf(f, "  logf(\"\\n**** NOT IMPLEMENTED\\n\");\n");
+#endif
 			fprintf(f, "  return E_NOTIMPL;\n");
 		}
 		else
@@ -727,8 +746,13 @@ void printCpp(int aIfaceNo)
 			}
 		}
 		
-		fprintf(f, "  poptab();\n" 
+		fprintf(f, 
+#ifndef DISABLE_LOGGING
+				   "  poptab();\n" 
+#endif
+#ifndef DISABLE_CRITICAL_SECTION
 				   "  LeaveCriticalSection(&gCS);\n"
+#endif
 				   "  return x;\n"
 		           "}\n"
 			       "\n");
