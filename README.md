@@ -7,6 +7,16 @@ Requires DirectX 8.1 SDK headers (although the parser should(tm) be able to hand
 
 The wrapper is a full pass-through wrapper; it doesn't do anything special, just takes in calls from the application, writes the event to a log, and passes the arguments to the real DirectX.
 
+downloads
+=========
+
+A binary package can be found at http://iki.fi/sol/zip/dxwrapper20130524.zip
+
+Source to the binary (w/generated files) http://iki.fi/sol/zip/dxwrapper20130524_src.zip
+
+license
+=======
+
 The whole thing, and the generated code, is released under zlib license:
 
 -- 8< -- 8< -- 8< --
@@ -34,6 +44,9 @@ freely, subject to the following restrictions:
 
 -- 8< -- 8< -- 8< --
 
+description
+===========
+
 The **wrappergen** directory contains the wrapper generator. This is used to turn the directx headers into classes like myIDirect3DDevice3.
 
 The **wrapper** directory contains some files that the wrapper itself uses in addition to the generated files. The generated files are currently in order of 400kB, and change heavily whenever the wrapper generator is changed, so there's really no point in putting the generated files in git.
@@ -45,6 +58,9 @@ Now, every time the application calls a function with a parameter that happens t
 Sometimes the application calls some function that returns another wrappable object. Sometimes we've already wrapped this. For this, I've added a simple (slow, and stupid) database of pointer pairs that is checked whenever one of those functions is called.
 
 It's entirely possible that other interfaces (like directmedia/directshow) eat or output directx objects, in which case we're either in trouble, or have to wrap more interfaces.
+
+examples
+========
 
 As an example of a generated wrapper function, here's myIDirect3DDevice3::DrawPrimitiveVB from the current version:
 
@@ -84,6 +100,9 @@ Sample clippet of the log created..
 [      +7ms] myIDirect3DDevice3::SetTextureStageState(DWORD 0, D3DTEXTURESTAGESTATETYPE, DWORD 3); -> return 0
 [      +7ms] myIDirect3DDevice3::DrawPrimitive(D3DPRIMITIVETYPE, DWORD 452, LPVOID 0x54a0020, DWORD 4, DWORD 24); -> return 0
 ```
+
+status
+======
 
 Unless bugs are found, this pass-through wrapper project is now complete. The biggest issue in my mind is that printing to the log is rather slow, and this is apparently primarily due to printf being slow (outputting the log to a ramdisk didn't have much of an effect, and disabling logging makes everything rather fast, so the wrapping itself isn't an issue).
 
