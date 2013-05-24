@@ -5,7 +5,7 @@
 #include <vector>
 #include <string>
 
-#define VERSION "ddwrappergen 0.130521 (c)2013 Jari Komppa http://iki.fi/sol/"
+#define VERSION "ddwrappergen 1.130524 (c)2013 Jari Komppa http://iki.fi/sol/"
 
 using namespace std;
 
