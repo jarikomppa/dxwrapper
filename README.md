@@ -1,13 +1,21 @@
 dxwrapper
 =========
 
-DirectX 1-7 wrapper project for making old games run on new hardware.
+DirectX 1-7 wrapper project for making old games run on new hardware. This code is only a "pass-through" wrapper, which can be used as boilerplate for actual fixes (or a dx->opengl wrapper or whatnot).
 
 Requires DirectX 8.1 SDK headers (although the parser should(tm) be able to handle just about any version), which the wrapper generator will parse to generate the interface wrappers for the various DirectX interfaces.
 
-At its current form, the wrapper is a full pass-through wrapper; it doesn't do anything special, just takes in calls from the application, writes the event to a log, and passes the arguments to the real DirectX.
+The wrapper is a full pass-through wrapper; it doesn't do anything special, just takes in calls from the application, writes the event to a log, and passes the arguments to the real DirectX.
 
-There's bound to be plenty of bugs left, but I've managed to get a 100k-line log out of Crimson Skies so far..
+downloads
+=========
+
+A binary package can be found at http://iki.fi/sol/zip/dxwrapper20130524.zip
+
+Source to the binary (w/generated files) http://iki.fi/sol/zip/dxwrapper20130524_src.zip
+
+license
+=======
 
 The whole thing, and the generated code, is released under zlib license:
 
@@ -36,28 +44,36 @@ freely, subject to the following restrictions:
 
 -- 8< -- 8< -- 8< --
 
-The wrappergen directory contains the wrapper generator. This is used to turn the directx headers into classes like myIDirect3DDevice3.
+description
+===========
 
-The wrapper directory contains some files that the wrapper itself uses in addition to the generated files. The generated files are currently in order of 330kB, and change heavily whenever the wrapper generator is changed, so there's really no point in putting the generated files in git.
+The **wrappergen** directory contains the wrapper generator. This is used to turn the directx headers into classes like myIDirect3DDevice3.
+
+The **wrapper** directory contains some files that the wrapper itself uses in addition to the generated files. The generated files are currently in order of 400kB, and change heavily whenever the wrapper generator is changed, so there's really no point in putting the generated files in git.
 
 The basic idea is to extend DirectX COM interface classes, and then pass the extended classes to the application. The application doesn't have any clue that it's not talking directly to DirectX (usually. I'm pretty sure punkbuster or some such does have checks against this). Then, when the application calls a function, we can muck around with the parameters before passing it to DirectX, and/or muck around with the returning value. It's also entirely possible to just skip on talking to DirectX and make an OpenGL back-end, like I did with ddhack for Wing Commander games, but that's a lot of work.
 
 Now, every time the application calls a function with a parameter that happens to be one of our wrapped classes, we also have to change these pointers to point at the original objects. This can get a bit tricky, and I'm sure I've missed several places (especially on interfaces I haven't seen in use yet). Just something to keep in mind when playing with it.
 
-Sometimes the application calls some function that returns another wrappable object. Sometimes we've already wrapped this. For this, I've added a simple (slow, and stupid) database of pointer pairs that is checked whenever one of those functions is called. Sometimes this can cause a false warning in the log, since the framebuffer, for example, doesn't need to be created implicitly, but is an attached surface. Or something. I've added code to wrap it when it's queried for the first time.
+Sometimes the application calls some function that returns another wrappable object. Sometimes we've already wrapped this. For this, I've added a simple (slow, and stupid) database of pointer pairs that is checked whenever one of those functions is called.
 
 It's entirely possible that other interfaces (like directmedia/directshow) eat or output directx objects, in which case we're either in trouble, or have to wrap more interfaces.
 
+examples
+========
+
 As an example of a generated wrapper function, here's myIDirect3DDevice3::DrawPrimitiveVB from the current version:
 
-```c++
+```C++
 HRESULT __stdcall myIDirect3DDevice3::DrawPrimitiveVB(D3DPRIMITIVETYPE a, LPDIRECT3DVERTEXBUFFER b, DWORD c, DWORD d, DWORD e)
 {
-  logf("myIDirect3DDevice3::DrawPrimitiveVB(D3DPRIMITIVETYPE, LPDIRECT3DVERTEXBUFFER[%08x], DWORD[%d], DWORD[%d], DWORD[%d]);", b, c, d, e);
-  pushtab();
+  EnterCriticalSection(&gCS);
+  logf("myIDirect3DDevice3::DrawPrimitiveVB(D3DPRIMITIVETYPE, LPDIRECT3DVERTEXBUFFER 0x%x, DWORD %d, DWORD %d, DWORD %d);", b, c, d, e);
   HRESULT x = mOriginal->DrawPrimitiveVB(a, (b)?((myIDirect3DVertexBuffer *)b)->mOriginal:0, c, d, e);
-  logfc(" -> return [%d]\n", x);
+  logfc(" -> return %d\n", x);
+  pushtab();
   poptab();
+  LeaveCriticalSection(&gCS);
   return x;
 }
 ```
@@ -65,18 +81,31 @@ HRESULT __stdcall myIDirect3DDevice3::DrawPrimitiveVB(D3DPRIMITIVETYPE a, LPDIRE
 As you note, not everything is logged (as of yet) - it's possible to add code to produce better logs if some specific thing (like, in this case, the primitve type) is of interest. There is also no logging of modified data or complex structures as of yet. Then again, more logging, slower execution..
 
 Sample clippet of the log created..
-```c++
-[     +15ms] myIDirect3DDevice3::SetTexture(DWORD[0], LPDIRECT3DTEXTURE2[03418488]); -> return [0]
-[     +16ms] myIDirect3DDevice3::DrawPrimitive(D3DPRIMITIVETYPE, DWORD[452], LPVOID[059c0020], DWORD[4], DWORD[24]); -> return [0]
-[      +0ms] myIDirectDraw4::CreateSurface(LPDDSURFACEDESC2[0018f7d8], LPDIRECTDRAWSURFACE4 FAR *[0018f7ac], IUnknown FAR *); -> return [0]
-[     +15ms] 	myIDirectDrawSurface4 ctor
-[      +0ms] 	Wrapped surface.
-[     +16ms] myIDirectDrawSurface4::Lock(LPRECT[00000000], LPDDSURFACEDESC2[0018f70c], DWORD[1], HANDLE); -> return [0]
-[      +0ms] myIDirectDrawSurface4::Unlock(LPRECT[00000000]); -> return [0]
-[     +16ms] myIDirectDraw4::CreateSurface(LPDDSURFACEDESC2[0018f7d8], LPDIRECTDRAWSURFACE4 FAR *[0018f7b0], IUnknown FAR *); -> return [0]
-[     +15ms] 	myIDirectDrawSurface4 ctor
-[      +0ms] 	Wrapped surface.
+```C++
+[      +7ms] myIDirect3DDevice3::SetTextureStageState(DWORD 0, D3DTEXTURESTAGESTATETYPE, DWORD 1); -> return 0
+[      +7ms] myIDirect3DDevice3::SetTextureStageState(DWORD 0, D3DTEXTURESTAGESTATETYPE, DWORD 1); -> return 0
+[      +7ms] myIDirect3DViewport3::SetViewport2(LPD3DVIEWPORT2 0xa17504); -> return 0
+[      +7ms] myIDirectDrawSurface4::Lock(LPRECT 0x0, LPDDSURFACEDESC2 0x18df48, DWORD 1, HANDLE); -> return 0
+[      +7ms] myIDirectDrawSurface4::Unlock(LPRECT 0x0); -> return 0
+[      +7ms] myIDirectDrawSurface4::QueryInterface(REFIID, LPVOID FAR * 0x18dfe0); -> return 0
+[      +7ms]    Interface Query: {93281502-8CF8-11D0-89AB-00A0C9054129}
+[      +5ms] 		myIDirect3DTexture2 ctor
+[      +5ms] 		Wrapped: IDirect3DTexture2
+[      +5ms] myIDirect3DTexture2::Load(LPDIRECT3DTEXTURE2 0x2a9b5f0); -> return 0
+[      +7ms] myIDirect3DTexture2::Release(); -> return 1
+[      +7ms] myIDirect3DDevice3::SetRenderState(D3DRENDERSTATETYPE, DWORD 1); -> return 0
+[      +7ms] myIDirect3DDevice3::SetRenderState(D3DRENDERSTATETYPE, DWORD 0); -> return 0
+[      +7ms] myIDirect3DDevice3::SetTexture(DWORD 0, LPDIRECT3DTEXTURE2 0x2a99828); -> return 0
+[      +7ms] myIDirect3DDevice3::SetTextureStageState(DWORD 0, D3DTEXTURESTAGESTATETYPE, DWORD 3); -> return 0
+[      +7ms] myIDirect3DDevice3::SetTextureStageState(DWORD 0, D3DTEXTURESTAGESTATETYPE, DWORD 3); -> return 0
+[      +7ms] myIDirect3DDevice3::DrawPrimitive(D3DPRIMITIVETYPE, DWORD 452, LPVOID 0x54a0020, DWORD 4, DWORD 24); -> return 0
 ```
+
+status
+======
+
+Unless bugs are found, this pass-through wrapper project is now complete. The biggest issue in my mind is that printing to the log is rather slow, and this is apparently primarily due to printf being slow (outputting the log to a ramdisk didn't have much of an effect, and disabling logging makes everything rather fast, so the wrapping itself isn't an issue).
+
 If you play with this code, toss me a note, I'm always interested in hearing about it, but I'm most likely too busy to actually help you (much) =)
 
 Cheers,
