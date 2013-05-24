@@ -508,8 +508,7 @@ void printCpp(int aIfaceNo)
 			   (iface->mMethod[i]->mParmType[j][0] == 'L' && iface->mMethod[i]->mParmType[j][1] == 'P'))
 			 fprintf(f, ", %s", iface->mMethod[i]->mParmName[j].c_str());
 		}
-		fprintf(f, ");\n"
-		           "  pushtab();\n");
+		fprintf(f, ");\n");
 
 		char * d3dtype = "$Undefined$"; 
 		char * d3dwrapper = "$Undefined$"; 
@@ -532,10 +531,10 @@ void printCpp(int aIfaceNo)
 		if (iface->mName == "IDirect3D2") { d3dmaterialwrapper = "myIDirect3DMaterial2"; d3dmaterialtype = "myIDirect3DMaterial2 *"; d3dviewportwrapper = "myIDirect3DViewport2"; d3dviewporttype = "myIDirect3DViewport2 *"; d3dvertexbufferwrapper = "myIDirect3DVertexBuffer";  d3dvertexbuffertype = "myIDirect3DVertexBuffer *";  ddsurfacewrapper = "myIDirectDrawSurface";  d3ddevicewrapper = "myIDirect3DDevice2"; d3ddevicetype = "myIDirect3DDevice2 *"; }
 		if (iface->mName == "IDirect3D3") { d3dmaterialwrapper = "myIDirect3DMaterial3"; d3dmaterialtype = "myIDirect3DMaterial3 *"; d3dviewportwrapper = "myIDirect3DViewport3"; d3dviewporttype = "myIDirect3DViewport3 *"; d3dvertexbufferwrapper = "myIDirect3DVertexBuffer";  d3dvertexbuffertype = "myIDirect3DVertexBuffer *";  ddsurfacewrapper = "myIDirectDrawSurface4"; d3ddevicewrapper = "myIDirect3DDevice3"; d3ddevicetype = "myIDirect3DDevice3 *"; }
 		if (iface->mName == "IDirect3D7") { d3dvertexbufferwrapper = "myIDirect3DVertexBuffer7"; d3dvertexbuffertype = "myIDirect3DVertexBuffer7 *"; ddsurfacewrapper = "myIDirectDrawSurface7"; d3ddevicewrapper = "myIDirect3DDevice7"; d3ddevicetype = "myIDirect3DDevice7 *"; }
-		if (iface->mName == "IDirect3DDevice") {  ddsurfacewrapper = "myIDirectDrawSurface";  d3dtexturewrapper = "myIDirect3DTexture";    d3dviewportwrapper = "myIDirect3DViewport";          d3dtype = "LPDIRECT3D";  d3dwrapper = "myIDirect3D";   ddsurfacetype = "LPDIRECTDRAWSURFACE";  d3dviewportwrapper = "myIDirect3DViewport"; }
-		if (iface->mName == "IDirect3DDevice2") { ddsurfacewrapper = "myIDirectDrawSurface";  d3dtexturewrapper = "myIDirect3DTexture";    d3dviewportwrapper = "myIDirect3DViewport2";         d3dtype = "LPDIRECT3D2"; d3dwrapper = "myIDirect3D2";  ddsurfacetype = "LPDIRECTDRAWSURFACE";  d3dviewportwrapper = "myIDirect3DViewport3"; }
-		if (iface->mName == "IDirect3DDevice3") { ddsurfacewrapper = "myIDirectDrawSurface4"; d3dtexturewrapper = "myIDirect3DTexture2";   d3dvertexbufferwrapper = "myIDirect3DVertexBuffer";  d3dtype = "LPDIRECT3D3"; d3dwrapper = "myIDirect3D3";  ddsurfacetype = "LPDIRECTDRAWSURFACE4"; d3dviewportwrapper = "myIDirect3DViewport3"; d3dtexturetype = "LPDIRECT3DTEXTURE2";   }
-		if (iface->mName == "IDirect3DDevice7") { ddsurfacewrapper = "myIDirectDrawSurface7"; d3dtexturewrapper = "myIDirectDrawSurface7"; d3dvertexbufferwrapper = "myIDirect3DVertexBuffer7"; d3dtype = "LPDIRECT3D7"; d3dwrapper = "myIDirect3D7";  ddsurfacetype = "LPDIRECTDRAWSURFACE7"; d3dviewportwrapper = "myIDirect3DViewport3"; d3dtexturetype = "LPDIRECTDRAWSURFACE7"; }
+		if (iface->mName == "IDirect3DDevice") {  ddsurfacewrapper = "myIDirectDrawSurface";  d3dtexturewrapper = "myIDirect3DTexture";    d3dtype = "LPDIRECT3D";  d3dwrapper = "myIDirect3D";   ddsurfacetype = "LPDIRECTDRAWSURFACE";  d3dviewportwrapper = "myIDirect3DViewport";  d3dviewporttype = "myIDirect3DViewport *"; }
+		if (iface->mName == "IDirect3DDevice2") { ddsurfacewrapper = "myIDirectDrawSurface";  d3dtexturewrapper = "myIDirect3DTexture";    d3dtype = "LPDIRECT3D2"; d3dwrapper = "myIDirect3D2";  ddsurfacetype = "LPDIRECTDRAWSURFACE";  d3dviewportwrapper = "myIDirect3DViewport2"; d3dviewporttype = "myIDirect3DViewport2 *"; }
+		if (iface->mName == "IDirect3DDevice3") { ddsurfacewrapper = "myIDirectDrawSurface4"; d3dtexturewrapper = "myIDirect3DTexture2";   d3dvertexbufferwrapper = "myIDirect3DVertexBuffer";  d3dtype = "LPDIRECT3D3"; d3dwrapper = "myIDirect3D3";  ddsurfacetype = "LPDIRECTDRAWSURFACE4"; d3dviewportwrapper = "myIDirect3DViewport3"; d3dviewporttype = "myIDirect3DViewport3 *"; d3dtexturetype = "LPDIRECT3DTEXTURE2";   }
+		if (iface->mName == "IDirect3DDevice7") { ddsurfacewrapper = "myIDirectDrawSurface7"; d3dtexturewrapper = "myIDirectDrawSurface7"; d3dvertexbufferwrapper = "myIDirect3DVertexBuffer7"; d3dtype = "LPDIRECT3D7"; d3dwrapper = "myIDirect3D7";  ddsurfacetype = "LPDIRECTDRAWSURFACE7"; d3dviewportwrapper = "myIDirect3DViewport3"; d3dviewporttype = "myIDirect3DViewport3 *"; d3dtexturetype = "LPDIRECTDRAWSURFACE7"; }
 		if (iface->mName == "IDirect3DMaterial")  d3ddevicewrapper = "myIDirect3DDevice";
 		if (iface->mName == "IDirect3DMaterial2") d3ddevicewrapper = "myIDirect3DDevice2";
 		if (iface->mName == "IDirect3DMaterial3") d3ddevicewrapper = "myIDirect3DDevice3";
@@ -553,7 +552,7 @@ void printCpp(int aIfaceNo)
 		if (iface->mName == "IDirectDrawSurface3") { ddsurfacewrapper = "myIDirectDrawSurface3"; ddsurfacetype = "myIDirectDrawSurface3 *"; ddwrapper = "myIDirectDraw3"; ddtype = "IDirectDraw3 *"; }
 		if (iface->mName == "IDirectDrawSurface4") { ddsurfacewrapper = "myIDirectDrawSurface4"; ddsurfacetype = "myIDirectDrawSurface4 *"; ddwrapper = "myIDirectDraw4"; ddtype = "IDirectDraw4 *"; }
 		if (iface->mName == "IDirectDrawSurface7") { ddsurfacewrapper = "myIDirectDrawSurface7"; ddsurfacetype = "myIDirectDrawSurface7 *"; ddwrapper = "myIDirectDraw7"; ddtype = "IDirectDraw7 *"; }
-
+		if (iface->mName == "IDirect3DViewport3") { ddsurfacewrapper = "myIDirectDrawSurface4"; ddsurfacetype = "myIDirectDrawSurface4 *"; }
 		fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 		for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 		{
@@ -577,7 +576,8 @@ void printCpp(int aIfaceNo)
 			}
 		}
 		fprintf(f, ");\n"
-			        "  logfc(\" -> return %%d\\n\", x);\n");
+			        "  logfc(\" -> return %%d\\n\", x);\n"					
+		            "  pushtab();\n");
 
 		if (iface->mMethod[i]->mFuncName == "Release")
 		{
@@ -613,14 +613,26 @@ void printCpp(int aIfaceNo)
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "GetGDISurface" ||
-		    iface->mMethod[i]->mFuncName == "GetRenderTarget")
+		    iface->mMethod[i]->mFuncName == "GetRenderTarget" ||
+			iface->mMethod[i]->mFuncName == "GetBackgroundDepth2")
 		{
 			printIfacePtrHandler(f, ddsurfacetype, iface->mMethod[i]->mParmName[0].c_str(), ddsurfacewrapper);
+		}
+		else
+		if (iface->mMethod[i]->mFuncName == "GetBackgroundDepth")
+		{
+			printIfacePtrHandler(f, "myIDirectDrawSurface *", "a", "myIDirectDrawSurface");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "CreateDevice")
 		{
 			printIfacePtrHandler(f, d3ddevicetype, "c", d3ddevicewrapper);
+		}
+		else
+		if (iface->mMethod[i]->mFuncName == "CreateDirectDraw")
+		{
+			// May require more thought, since the dd interface returned may be something else than just plain dd1.
+			printIfacePtrHandler(f, "myIDirectDraw *", "ppDirectDraw", "myIDirectDraw");
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "CreateVertexBuffer")
@@ -633,14 +645,30 @@ void printCpp(int aIfaceNo)
 			printIfacePtrHandler(f, "myIDirect3DLight *", "a", "myIDirect3DLight");
 		}
 		else
+		if (iface->mMethod[i]->mFuncName == "NextLight")
+		{
+			printIfacePtrHandler(f, "myIDirect3DLight *", "b", "myIDirect3DLight");
+		}
+		else
+		if (iface->mMethod[i]->mFuncName == "CreateExecuteBuffer")
+		{
+			printIfacePtrHandler(f, "myIDirect3DExecuteBuffer *", "b", "myIDirect3DExecuteBuffer");
+		}
+		else			
 		if (iface->mMethod[i]->mFuncName == "CreateMaterial")
 		{
 			printIfacePtrHandler(f, d3dmaterialtype, "a", d3dmaterialwrapper);
 		}
 		else
-		if (iface->mMethod[i]->mFuncName == "CreateViewport")
+		if (iface->mMethod[i]->mFuncName == "CreateViewport" ||
+			iface->mMethod[i]->mFuncName == "GetCurrentViewport")
 		{
 			printIfacePtrHandler(f, d3dviewporttype, "a", d3dviewportwrapper);
+		}
+		else
+		if (iface->mMethod[i]->mFuncName == "NextViewport")
+		{
+			printIfacePtrHandler(f, d3dviewporttype, "b", d3dviewportwrapper);
 		}
 		else
 		if (iface->mMethod[i]->mFuncName == "GetPalette")
@@ -670,12 +698,33 @@ void printCpp(int aIfaceNo)
 		else
 		if (0)
 		{
+			// If there are some specifically non-implemented methods
+
 			fprintf(f, "  logf(\"\\n**** NOT IMPLEMENTED\\n\");\n");
 			fprintf(f, "  return E_NOTIMPL;\n");
 		}
 		else
+		if (iface->mMethod[i]->mFuncName == "EvaluateMode" ||
+			iface->mMethod[i]->mFuncName == "Lock")
 		{
-			// generic function, doesn't do anything strange
+			// Just to skip the warnings generated below..
+		}
+		else
+		{
+			// generic function, doesn't do anything strange. 
+			// Let's do some heuristics to see if this function should get special handing..
+			for (j = 0; j < (signed)iface->mMethod[i]->mParmType.size(); j++)
+			{
+				if (iface->mMethod[i]->mParmType[j].find('*') != std::string::npos &&
+					iface->mMethod[i]->mParmType[j].find("HDC") == std::string::npos &&
+					iface->mMethod[i]->mParmType[j].find("GUID") == std::string::npos &&
+					iface->mMethod[i]->mParmType[j].find("HWND") == std::string::npos &&
+					iface->mMethod[i]->mParmType[j].find("D3DVALUE") == std::string::npos &&
+					iface->mMethod[i]->mParmType[j].find("BOOL") == std::string::npos)
+				{
+					printf("\n%s::%s may need special care due to %s", iface->mName.c_str(), iface->mMethod[i]->mFuncName.c_str(), iface->mMethod[i]->mParmType[j].c_str());
+				}
+			}
 		}
 		
 		fprintf(f, "  poptab();\n" 

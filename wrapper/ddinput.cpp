@@ -74,7 +74,9 @@ extern "C" HRESULT _stdcall myDirectDrawCreate(GUID* a, IDirectDraw** b, IUnknow
 	if(!DDrawCreate) LoadDLL();
 	HRESULT hr=DDrawCreate(a,b,c);
 	if(FAILED(hr)) return hr;
+	pushtab();
 	*b=(IDirectDraw*)new myIDirectDraw(*b);
+	poptab();
 	return 0;
 }
 
@@ -88,7 +90,9 @@ extern "C" HRESULT _stdcall myDirectDrawCreateEx(
 	logf(__FUNCTION__ "\n");
 	if(!DDrawCreate) LoadDLL();
 	HRESULT hr = DDrawCreateEx(lpGUID, lplpDD, iid, pUnkOuter);
+	pushtab();
 	genericQueryInterface(iid, lplpDD);
+	poptab();
 	return hr;
 }
 

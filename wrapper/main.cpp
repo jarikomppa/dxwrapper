@@ -25,33 +25,12 @@ bool _stdcall DllMain(HANDLE, DWORD dwReason, LPVOID) {
 	return true;
 }
 
-#define DISABLE_LOGGING
+//#define DISABLE_LOGGING
+#define MAX_TABDEPTH 100
 
 int gLoglines = 0;
-
-FILE * openlog()
-{
-	char fname[]="wrapper0.log";
-	fname[7] = '0' + (gLoglines >> 18); // new file every ~256k lines
-	return fopen(fname, "a");
-}
-
-void logfc(char * fmt, ...)
-{
-#ifndef DISABLE_LOGGING
-	va_list ap;
-	va_start(ap, fmt);
-	FILE *f = openlog();
-	if (f)
-	{
-		vfprintf(f, fmt, ap);
-		fclose(f);
-	}
-	va_end(ap);
-#endif
-}
-
 int gTabStops = 0;
+int gLastTick = 0;
 
 void pushtab()
 {
@@ -77,20 +56,47 @@ long long milliseconds_now() {
     }
 }
 
-int gLastTick = 0;
+FILE * openlog()
+{
+	char fname[]="wrapper0.log";
+	fname[7] = '0' + (gLoglines >> 20); // new file every ~1024k lines
 
-void logf(char * fmt, ...)
+	return fopen(fname, "a");
+}
+
+void logfc(char * fmt, ...)
 {
 #ifndef DISABLE_LOGGING
-	gLoglines++;
+	if (gTabStops > MAX_TABDEPTH)
+		return;
+	
 	va_list ap;
 	va_start(ap, fmt);
 	FILE *f = openlog();
 	if (f)
 	{
-		int tick = (int)milliseconds_now();
-		fprintf(f, "[%+8dms] ", tick - gLastTick);
-		gLastTick = tick;
+		vfprintf(f, fmt, ap);
+		fclose(f);
+	}
+	va_end(ap);
+#endif
+}
+
+void logf(char * fmt, ...)
+{
+#ifndef DISABLE_LOGGING
+	if (gTabStops > MAX_TABDEPTH)
+		return;
+
+	gLoglines++;
+	int tick = (int)milliseconds_now();
+	logfc("[%+8dms] ", tick - gLastTick);
+	gLastTick = tick;
+	va_list ap;
+	va_start(ap, fmt);
+	FILE *f = openlog();
+	if (f)
+	{
 		int i;
 		for (i = 0; i < gTabStops; i++) fputc('\t', f);
 		vfprintf(f, fmt, ap);
@@ -154,9 +160,10 @@ void * wrapfetch(void * aOriginal)
 {
 	void * ret = do_wrapfetch(aOriginal);
 
-	if (ret == NULL)
+/*	if (ret == NULL)
 	{
 		logf("Pre-wrapped object not found - returning null\n");
 	}
+*/
 	return ret;
 }
