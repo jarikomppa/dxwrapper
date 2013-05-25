@@ -9,6 +9,7 @@
 
 //#define DISABLE_LOGGING
 //#define DISABLE_CRITICAL_SECTION
+//#define DISABLE_PASSTHROUGH
 
 using namespace std;
 
@@ -395,7 +396,11 @@ void printH(int aIfaceNo)
 	fprintf(f, "class my%s : public %s\n", iface->mName.c_str(), iface->mName.c_str());
 	fprintf(f, "{\n"
 		"public:\n");
+#ifdef DISABLE_PASSTHROUGH
+	fprintf(f, "  my%s();\n", iface->mName.c_str(), iface->mName.c_str());
+#else
 	fprintf(f, "  my%s(%s * aOriginal);\n", iface->mName.c_str(), iface->mName.c_str());
+#endif
 	fprintf(f, "  ~my%s();\n", iface->mName.c_str());
 	fprintf(f, "\n");
 	int i;
@@ -407,8 +412,13 @@ void printH(int aIfaceNo)
 			fprintf(f, "%s%s %s",j?", ":"", iface->mMethod[i]->mParmType[j].c_str(), iface->mMethod[i]->mParmName[j].c_str());
 		fprintf(f, ");\n");
 	}
+#ifdef DISABLE_PASSTHROUGH
+	fprintf(f, "\n"
+		       " int mRef;\n");
+#else
 	fprintf(f, "\n"
 		   "  %s * mOriginal;\n", iface->mName.c_str());
+#endif
 	fprintf(f, "};\n\n");
 	fclose(f);
 }
@@ -417,6 +427,19 @@ void printIfacePtrHandler(FILE * f, const char * aDataType, const char * aVariab
 {
 	if (aPtrCaster)
 	{
+#ifdef DISABLE_PASSTHROUGH
+		printTemplate(f,
+					"  @0 n = (@0)new @2();\n"
+#ifndef DISABLE_LOGGING
+					"  logf(\"Wrapped.\\n\");\n"
+#endif
+					"  *@1 = n;\n", 
+					/* 0 */ aDataType,
+					/* 1 */ aVariable,
+					/* 2 */ aWrapper,
+					/* 3 */ aPtrCaster,
+					0);
+#else
 		printTemplate(f,
 					"  @0 n = (@0)wrapfetch(*@1);\n"
 					"  if (n == NULL && *@1 != NULL)\n"
@@ -433,9 +456,22 @@ void printIfacePtrHandler(FILE * f, const char * aDataType, const char * aVariab
 					/* 2 */ aWrapper,
 					/* 3 */ aPtrCaster,
 					0);
+#endif
 	}
 	else
 	{
+#ifdef DISABLE_PASSTHROUGH
+		printTemplate(f,
+					"  @0 n = (@0)new @2();\n"
+#ifndef DISABLE_LOGGING
+					"  logf(\"Wrapped.\\n\");\n"
+#endif
+					"  *@1 = n;\n", 
+					/* 0 */ aDataType,
+					/* 1 */ aVariable,
+					/* 2 */ aWrapper,
+					0);
+#else
 		printTemplate(f,
 					"  @0 n = (@0)wrapfetch(*@1);\n"
 					"  if (n == NULL && *@1 != NULL)\n"
@@ -451,6 +487,7 @@ void printIfacePtrHandler(FILE * f, const char * aDataType, const char * aVariab
 					/* 1 */ aVariable,
 					/* 2 */ aWrapper,
 					0);
+#endif
 	}
 }
 
@@ -469,14 +506,22 @@ void printCpp(int aIfaceNo)
 	fprintf(f, "#include \"wrapper.h\"\n");	
 	fprintf(f, "#include \"my%s.h\"\n\n", iface->mName.c_str());
 
+#ifdef DISABLE_PASSTHROUGH
+	fprintf(f, "my%s::my%s()\n", iface->mName.c_str(), iface->mName.c_str());
+#else
 	fprintf(f, "my%s::my%s(%s * aOriginal)\n", iface->mName.c_str(), iface->mName.c_str(), iface->mName.c_str());
+#endif
 	fprintf(f, "{\n");
 #ifndef DISABLE_LOGGING
 	fprintf(f, "  logf(\"my%s ctor\\n\");\n", iface->mName.c_str());
 #endif
-	fprintf(f, "  mOriginal = aOriginal;\n"
-		   "}\n"
-		   "\n");
+#ifdef DISABLE_PASSTHROUGH
+	fprintf(f, "  mRef = 1;\n");
+#else
+	fprintf(f, "  mOriginal = aOriginal;\n");
+#endif
+    fprintf(f,"}\n"
+	     	   "\n");
 
 	fprintf(f, "my%s::~my%s()\n", iface->mName.c_str(), iface->mName.c_str());
 	fprintf(f, "{\n");
@@ -568,6 +613,9 @@ void printCpp(int aIfaceNo)
 		if (iface->mName == "IDirectDrawSurface4") { ddsurfacewrapper = "myIDirectDrawSurface4"; ddsurfacetype = "myIDirectDrawSurface4 *"; ddwrapper = "myIDirectDraw4"; ddtype = "IDirectDraw4 *"; }
 		if (iface->mName == "IDirectDrawSurface7") { ddsurfacewrapper = "myIDirectDrawSurface7"; ddsurfacetype = "myIDirectDrawSurface7 *"; ddwrapper = "myIDirectDraw7"; ddtype = "IDirectDraw7 *"; }
 		if (iface->mName == "IDirect3DViewport3") { ddsurfacewrapper = "myIDirectDrawSurface4"; ddsurfacetype = "myIDirectDrawSurface4 *"; }
+#ifdef DISABLE_PASSTHROUGH
+		fprintf(f, "  %s x = 0;\n", iface->mMethod[i]->mRetType.c_str());
+#else
 		fprintf(f, "  %s x = mOriginal->%s(", iface->mMethod[i]->mRetType.c_str(), iface->mMethod[i]->mFuncName.c_str());
 		for (j = 0; j < (signed)iface->mMethod[i]->mParmName.size(); j++)
 		{
@@ -590,23 +638,39 @@ void printCpp(int aIfaceNo)
 				fprintf(f, "%s%s", j?", ":"", iface->mMethod[i]->mParmName[j].c_str());
 			}
 		}
-		fprintf(f, ");\n"
-#ifndef DISABLE_LOGGING
-					"  logfc(\" -> return %%d\\n\", x);\n"
-		            "  pushtab();\n"
+		fprintf(f, ");\n");
 #endif
-					);
+#ifndef DISABLE_LOGGING
+		fprintf(f,	"  logfc(\" -> return %%d\\n\", x);\n"
+		            "  pushtab();\n");
+#endif
+					
 
 		if (iface->mMethod[i]->mFuncName == "Release")
 		{
+#ifdef DISABLE_PASSTHROUGH
+			fprintf(f, "  x = --mRef;\n"
+				       "  if (mRef <= 0)\n"
+				       "  {\n"
+					   "    delete this;\n"
+					   "  }\n");
+#else
 			fprintf(f, "  if (x == 0)\n"
 				       "  {\n"
 					   "    wrapstore(mOriginal, 0);\n"
 					   "    mOriginal = NULL;\n"
 					   "    delete this;\n"
 					   "  }\n");
+#endif
 		}
 		else
+#ifdef DISABLE_PASSTHROUGH
+		if (iface->mMethod[i]->mFuncName == "AddRef")
+		{
+			fprintf(f, "  x = ++mRef;\n");
+		}
+		else
+#endif
 		if (iface->mMethod[i]->mFuncName == "QueryInterface")
 		{
             fprintf(f, "  if (x == 0) genericQueryInterface(%s, %s);\n", iface->mMethod[i]->mParmName[0].c_str(), iface->mMethod[i]->mParmName[1].c_str());
