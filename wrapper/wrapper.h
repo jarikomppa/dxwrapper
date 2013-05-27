@@ -51,3 +51,36 @@ void wrapstore(void * aOriginal, void * aWrapper);
 void *wrapfetch(void * aOriginal);
 void pushtab();
 void poptab();
+
+#ifdef _DEBUG
+#define DEBUGMESS(a) OutputDebugStringA(a)
+#else
+#define DEBUGMESS(a)
+#endif
+
+
+#define STRINGIFY(x) STRINGIFY_INNER(x)
+#define STRINGIFY_INNER(x) #x
+
+//#define WARNMODE_NONE
+//#define WARNMODE_MESSAGE
+#define WARNMODE_BREAK
+
+#if defined(WARNMODE_NONE)
+#define UNDEFINED return E_FAIL;
+#define UNDEFINED_(x) return (x);
+#define UNDEFINED_void return;
+#define UNDEFINED_WARN
+#elif defined(WARNMODE_BREAK)
+#define UNDEFINED_WARN DEBUGMESS(__FILE__ "(" STRINGIFY(__LINE__) "): Undefined function called: " __FUNCTION__ "\r\n"); DebugBreak(); 
+#define UNDEFINED { UNDEFINED_WARN; return 0; }
+#define UNDEFINED_(x) { UNDEFINED_WARN; return (x); }
+#define UNDEFINED_void { UNDEFINED_WARN; return; }
+#else // WARNMODE_MESSAGE
+#define UNDEFINED_WARN DEBUGMESS(__FILE__ "(" STRINGIFY(__LINE__) "): Undefined function called: " __FUNCTION__ "\r\n");
+#define UNDEFINED { UNDEFINED_WARN; return 0; }
+#define UNDEFINED_(x) { UNDEFINED_WARN; return (x); }
+#define UNDEFINED_void { UNDEFINED_WARN; return; }
+#endif
+
+#define DEFINED_NOTE DEBUGMESS(__FILE__ "(" STRINGIFY(__LINE__) "): Defined function called: " __FUNCTION__ "\r\n");
