@@ -10,6 +10,7 @@
 //#define DISABLE_LOGGING
 //#define DISABLE_CRITICAL_SECTION
 //#define DISABLE_PASSTHROUGH
+//#define ADD_UNDEFINED_MACRO
 
 using namespace std;
 
@@ -543,6 +544,10 @@ void printCpp(int aIfaceNo)
 
 #ifndef DISABLE_CRITICAL_SECTION
 		fprintf(f, "  EnterCriticalSection(&gCS);\n");
+#endif
+
+#ifdef ADD_UNDEFINED_MACRO
+		fprintf(f, "  UNDEFINED_WARN;\n");			
 #endif
 
 #ifndef DISABLE_LOGGING
